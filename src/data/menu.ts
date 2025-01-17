@@ -27,7 +27,7 @@ export const menuData: MenuSection[] = [
           { name: 'Sencilla', price: 184 },
           { name: 'Con orilla de queso', price: 204 },
         ],
-        image: '../src/assets/images/p-1.png',
+        image: './images/p-1.png',
       },
       {
         name: 'Peperoni',
@@ -37,7 +37,7 @@ export const menuData: MenuSection[] = [
           { name: 'Sencilla', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
-        image: '../src/assets/images/p-2.png',
+        image: './images/p-2.png',
       },
       {
         name: 'Especial',
@@ -48,7 +48,7 @@ export const menuData: MenuSection[] = [
           { name: 'Sencilla', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
-        image: '../src/assets/images/p-3.png',
+        image: './images/p-3.png',
       },
       {
         name: 'Champiñón',
@@ -58,7 +58,7 @@ export const menuData: MenuSection[] = [
           { name: 'Regular', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
-        image: '../src/assets/images/p-4.png',
+        image: './images/p-4.png',
       },
       {
         name: 'Hawaiana',
@@ -68,7 +68,7 @@ export const menuData: MenuSection[] = [
           { name: 'Regular', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
-        image: '../src/assets/images/p-5.png',
+        image: './images/p-5.png',
       },
       {
         name: 'Vegetariana',
@@ -79,7 +79,7 @@ export const menuData: MenuSection[] = [
           { name: 'Regular', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
-        image: '../src/assets/images/p-6.png',
+        image: './images/p-6.png',
       },
       {
         name: 'Carne Asada',
@@ -90,7 +90,7 @@ export const menuData: MenuSection[] = [
           { name: 'Sencilla', price: 184 },
           { name: 'Con orilla de queso', price: 204 },
         ],
-        image: '../src/assets/images/p-7.png',
+        image: './images/p-7.png',
       },
       {
         name: 'Mexicana',
@@ -101,7 +101,7 @@ export const menuData: MenuSection[] = [
           { name: 'Sencilla', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
-        image: '../src/assets/images/p-8.png',
+        image: './images/p-8.png',
       },
       {
         name: 'Salchicha',
@@ -111,7 +111,7 @@ export const menuData: MenuSection[] = [
           { name: 'Sencilla', price: 99 },
           { name: 'Con orilla de queso', price: 159 },
         ],
-        image: '../src/assets/images/p-9.png',
+        image: './images/p-9.png',
       },
       {
         name: 'Tres Quesos',
@@ -122,7 +122,7 @@ export const menuData: MenuSection[] = [
           { name: 'Regular', price: 99 },
           { name: 'Con orilla de queso', price: 159 },
         ],
-        image: '../src/assets/images/p-10.png',
+        image: './images/p-10.png',
       },
       {
         name: 'Jamón',
@@ -132,7 +132,7 @@ export const menuData: MenuSection[] = [
           { name: 'Regular', price: 99 },
           { name: 'Con orilla de queso', price: 159 },
         ],
-        image: '../src/assets/images/p-11.png',
+        image: './images/p-11.png',
       },
       {
         name: 'Asadera',
@@ -142,7 +142,7 @@ export const menuData: MenuSection[] = [
           { name: 'Regular', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
-        image: '../src/assets/images/p-12.png',
+        image: './images/p-12.png',
       },
     ],
   },

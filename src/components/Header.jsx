@@ -6,7 +6,7 @@ export default function Header() {
     <header className="text-center py-6 mb-8">
       <div className="flex items-center justify-center gap-4">
         <img
-          src="../src/assets/images/logo.png"
+          src="./images/logo.png"
           alt="Pizzazi Logo"
           style={{ height: '100px' }}
           className="object-cover rounded-full"
