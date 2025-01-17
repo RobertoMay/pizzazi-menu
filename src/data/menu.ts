@@ -55,7 +55,7 @@ export const menuData: MenuSection[] = [
         description: 'Jamón, champiñones y nuestra selección de 3 quesos',
         price: 144,
         options: [
-          { name: 'Regular', price: 144 },
+          { name: 'Sencilla', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
         image: './images/p-4.png',
@@ -65,7 +65,7 @@ export const menuData: MenuSection[] = [
         description: 'Jamón, piña, salsa dulce y nuestra selección de 3 quesos',
         price: 144,
         options: [
-          { name: 'Regular', price: 144 },
+          { name: 'Sencilla', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
         image: './images/p-5.png',
@@ -76,7 +76,7 @@ export const menuData: MenuSection[] = [
           'Piña, champiñones, cebolla, pimiento, tomate y nuestra selección de 3 quesos',
         price: 144,
         options: [
-          { name: 'Regular', price: 144 },
+          { name: 'Sencilla', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
         image: './images/p-6.png',
@@ -119,7 +119,7 @@ export const menuData: MenuSection[] = [
           'Nuestra selección de 3 quesos: manchego, gouda y mozzarella',
         price: 99,
         options: [
-          { name: 'Regular', price: 99 },
+          { name: 'Sencilla', price: 99 },
           { name: 'Con orilla de queso', price: 159 },
         ],
         image: './images/p-10.png',
@@ -129,7 +129,7 @@ export const menuData: MenuSection[] = [
         description: 'Jamón y nuestra selección de 3 quesos',
         price: 99,
         options: [
-          { name: 'Regular', price: 99 },
+          { name: 'Sencilla', price: 99 },
           { name: 'Con orilla de queso', price: 159 },
         ],
         image: './images/p-11.png',
@@ -139,7 +139,7 @@ export const menuData: MenuSection[] = [
         description: 'Salchicha para asar nuestra selección de 3 quesos',
         price: 144,
         options: [
-          { name: 'Regular', price: 144 },
+          { name: 'Sencilla', price: 144 },
           { name: 'Con orilla de queso', price: 169 },
         ],
         image: './images/p-12.png',
