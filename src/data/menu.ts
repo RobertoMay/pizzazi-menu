@@ -25,7 +25,7 @@ export const menuData: MenuSection[] = [
         price: 184,
         options: [
           { name: 'Sencilla', price: 184 },
-          { name: 'Con orilla de queso', price: 204 },
+          { name: 'Con orilla de queso', price: 209 },
         ],
         image: './images/p-1.png',
       },
@@ -35,7 +35,7 @@ export const menuData: MenuSection[] = [
         price: 144,
         options: [
           { name: 'Sencilla', price: 144 },
-          { name: 'Con orilla de queso', price: 169 },
+          { name: 'Con orilla de queso', price: 174 },
         ],
         image: './images/p-2.png',
       },
@@ -46,7 +46,7 @@ export const menuData: MenuSection[] = [
         price: 144,
         options: [
           { name: 'Sencilla', price: 144 },
-          { name: 'Con orilla de queso', price: 169 },
+          { name: 'Con orilla de queso', price: 174 },
         ],
         image: './images/p-3.png',
       },
@@ -56,7 +56,7 @@ export const menuData: MenuSection[] = [
         price: 144,
         options: [
           { name: 'Sencilla', price: 144 },
-          { name: 'Con orilla de queso', price: 169 },
+          { name: 'Con orilla de queso', price: 174 },
         ],
         image: './images/p-4.png',
       },
@@ -66,7 +66,7 @@ export const menuData: MenuSection[] = [
         price: 144,
         options: [
           { name: 'Sencilla', price: 144 },
-          { name: 'Con orilla de queso', price: 169 },
+          { name: 'Con orilla de queso', price: 174 },
         ],
         image: './images/p-5.png',
       },
@@ -77,7 +77,7 @@ export const menuData: MenuSection[] = [
         price: 144,
         options: [
           { name: 'Sencilla', price: 144 },
-          { name: 'Con orilla de queso', price: 169 },
+          { name: 'Con orilla de queso', price: 174 },
         ],
         image: './images/p-6.png',
       },
@@ -88,7 +88,7 @@ export const menuData: MenuSection[] = [
         price: 184,
         options: [
           { name: 'Sencilla', price: 184 },
-          { name: 'Con orilla de queso', price: 204 },
+          { name: 'Con orilla de queso', price: 209 },
         ],
         image: './images/p-7.png',
       },
@@ -99,7 +99,7 @@ export const menuData: MenuSection[] = [
         price: 144,
         options: [
           { name: 'Sencilla', price: 144 },
-          { name: 'Con orilla de queso', price: 169 },
+          { name: 'Con orilla de queso', price: 174 },
         ],
         image: './images/p-8.png',
       },
@@ -109,7 +109,7 @@ export const menuData: MenuSection[] = [
         price: 99,
         options: [
           { name: 'Sencilla', price: 99 },
-          { name: 'Con orilla de queso', price: 159 },
+          { name: 'Con orilla de queso', price: 164 },
         ],
         image: './images/p-9.png',
       },
@@ -120,7 +120,7 @@ export const menuData: MenuSection[] = [
         price: 99,
         options: [
           { name: 'Sencilla', price: 99 },
-          { name: 'Con orilla de queso', price: 159 },
+          { name: 'Con orilla de queso', price: 164 },
         ],
         image: './images/p-10.png',
       },
@@ -130,7 +130,7 @@ export const menuData: MenuSection[] = [
         price: 99,
         options: [
           { name: 'Sencilla', price: 99 },
-          { name: 'Con orilla de queso', price: 159 },
+          { name: 'Con orilla de queso', price: 164 },
         ],
         image: './images/p-11.png',
       },
@@ -140,7 +140,7 @@ export const menuData: MenuSection[] = [
         price: 144,
         options: [
           { name: 'Sencilla', price: 144 },
-          { name: 'Con orilla de queso', price: 169 },
+          { name: 'Con orilla de queso', price: 174 },
         ],
         image: './images/p-12.png',
       },
@@ -153,24 +153,24 @@ export const menuData: MenuSection[] = [
         name: 'Especial',
         description:
           'Carne arrachera, jamón, queso, tocino, salchicha, vegetales, papas fritas',
-        price: 70,
+        price: 75,
       },
       {
         name: 'Hawaiana',
         description:
           'Carne arrachera, doble jamón, queso, piña, vegetales, papas fritas',
-        price: 70,
+        price: 75,
       },
       {
         name: 'BBQ',
         description:
           'Carne arrachera, jamón, queso, tocino, salchicha, salsa BBQ, vegetales, papas fritas',
-        price: 70,
+        price: 75,
       },
       {
         name: 'Sencilla',
-        description: 'Carne arrachera, jamón y vegetales',
-        price: 59,
+        description: 'Carne arrachera, jamón, queso y vegetales',
+        price: 65,
       },
     ],
   },
@@ -179,18 +179,36 @@ export const menuData: MenuSection[] = [
     items: [
       {
         name: 'Grande',
-        price: 125,
-        description: 'Disponible en Asado o Pastor',
+        price: 135,
+        description:
+          'Tostadas, frijol, queso (2 capas), romanita, carne asado o pastor, mexicana, chile jalapeño y crema',
       },
       {
         name: 'Mediano',
-        price: 99,
-        description: 'Disponible en Asado o Pastor',
+        price: 115,
+        description:
+          'Tostadas, frijol, queso (2 capas), romanita, carne asado o pastor, mexicana, chile jalapeño y crema',
       },
       {
         name: 'Chico',
-        price: 65,
-        description: 'Disponible en Asado o Pastor',
+        price: 75,
+        description:
+          'Tostadas, frijol, queso (2 capas), romanita, carne asado o pastor, mexicana, chile jalapeño y crema',
+      },
+    ],
+  },
+  {
+    title: 'Hot Dogs',
+    items: [
+      {
+        name: 'Hot Dog Especial',
+        price: 20,
+        description: 'Salchicha, tocino, cebolla y carne',
+      },
+      {
+        name: 'Hot Dog Sencillo',
+        price: 15,
+        description: 'Salchicha, tocino y cebolla',
       },
     ],
   },
@@ -198,24 +216,32 @@ export const menuData: MenuSection[] = [
     title: 'Antojitos',
     items: [
       {
-        name: 'Tortas',
-        price: 28,
-        description: 'Disponible en Asado o Pastor',
-      },
-      {
-        name: 'Tacos',
-        price: 20,
-        description: 'Disponible en Asado o Pastor',
-      },
-      {
-        name: 'Gringas',
-        price: 20,
-        description: 'Disponible en Asado o Pastor',
+        name: 'Gringa',
+        price: 25,
+        description:
+          'Tortilla de harina rellena de carne y queso. Disponible en Asado o Pastor',
       },
       {
         name: 'Burritos',
+        price: 30,
+        description:
+          'Doble tortilla de harina, rellena de carne, frijol y queso. Disponible en Asado o Pastor',
+      },
+      {
+        name: 'Tacos de Maíz',
+        price: 20,
+        description: 'Carne asada o de pastor (piña) y cebolla con cilantro',
+      },
+      {
+        name: 'Tacos de Harina',
+        price: 20,
+        description: 'Carne asada o de pastor (piña) y cebolla con cilantro',
+      },
+      {
+        name: 'Tortas',
         price: 28,
-        description: 'Disponible en Asado o Pastor',
+        description:
+          'Frijol, mayonesa y cebolla con cilantro. Disponible en Asado o Pastor',
       },
     ],
   },
@@ -227,8 +253,16 @@ export const menuData: MenuSection[] = [
         price: 50,
       },
       {
-        name: 'Orden de Pan con Ajo y Queso',
+        name: 'Pan con Ajo y Queso',
         price: 40,
+      },
+      {
+        name: 'Champiñón Extra',
+        price: 15,
+      },
+      {
+        name: 'Queso Extra (para tacos)',
+        price: 5,
       },
     ],
   },
@@ -236,20 +270,24 @@ export const menuData: MenuSection[] = [
 
 export interface Location {
   name: string;
+  address: string;
   phones: string[];
 }
 
 export const locations: Location[] = [
   {
     name: 'MAXCANÚ',
+    address: 'C 22 x 15 y 17 centro',
     phones: ['99-94-15-36-80', '99-71-34-31-90', '99-79-71-26-83'],
   },
   {
     name: 'HALACHÓ',
+    address: '',
     phones: ['99-71-18-17-60', '99-71-07-09-49', '99-76-88-20-30'],
   },
   {
     name: 'DZITBALCHÉ',
+    address: '',
     phones: ['99-61-04-08-86', '99-96-63-35-37', '99-66-88-08-66'],
   },
 ];
