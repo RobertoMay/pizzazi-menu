@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 const formatPromoLabel = (promo) => {
   if (!promo) return null;
   switch (promo.type) {
@@ -49,7 +51,25 @@ function CellPrice({ price, promo }) {
 export default function MenuItem({ item, promotion }) {
   const promoLabel  = formatPromoLabel(promotion);
   const hasVariants = item.variants?.length > 0;
-  const hasMods     = hasVariants && item.modifiers?.length > 0;
+
+  // Detectar formato: nuevo (modifiers por variante) vs legado (modifiers globales)
+  const isNewFormat  = hasVariants && item.variants.some(v => v.modifiers?.length > 0);
+  const isLegacy     = hasVariants && !isNewFormat && item.modifiers?.length > 0;
+
+  const [selVI, setSelVI] = useState(0);
+  const [selMI, setSelMI] = useState(0);
+
+  // Para el formato nuevo: los extras del tamaño seleccionado pueden variar
+  const selectedVariant = hasVariants ? item.variants[selVI] : null;
+  const variantMods     = selectedVariant?.modifiers ?? [];
+  const hasVarMods      = variantMods.length > 0;
+
+  // Precio para el formato interactivo (nuevo formato)
+  const interactivePrice = isNewFormat
+    ? (hasVarMods ? (variantMods[selMI]?.price ?? 0) : (selectedVariant?.price ?? selectedVariant?.prices?.[0] ?? 0))
+    : null;
+
+  const pill = 'px-3 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer select-none border';
 
   return (
     <div
@@ -62,10 +82,7 @@ export default function MenuItem({ item, promotion }) {
             className="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110" />
           {promoLabel && (
             <span className="absolute top-2.5 left-2.5 px-4 py-1.5 rounded-full text-sm font-black text-white"
-              style={{
-                background: 'linear-gradient(135deg, #F84331, #CB3F31)',
-                boxShadow: '0 4px 20px rgba(248,67,49,0.6), 0 2px 8px rgba(0,0,0,0.5)',
-              }}>
+              style={{ background: 'linear-gradient(135deg, #F84331, #CB3F31)', boxShadow: '0 4px 20px rgba(248,67,49,0.6)' }}>
               🎉 {promoLabel}
             </span>
           )}
@@ -77,10 +94,7 @@ export default function MenuItem({ item, promotion }) {
 
         {promoLabel && !item.image && (
           <span className="inline-block mb-2 px-4 py-1.5 rounded-full text-sm font-black text-white"
-            style={{
-              background: 'linear-gradient(135deg, #F84331, #CB3F31)',
-              boxShadow: '0 4px 20px rgba(248,67,49,0.45)',
-            }}>
+            style={{ background: 'linear-gradient(135deg, #F84331, #CB3F31)', boxShadow: '0 4px 20px rgba(248,67,49,0.45)' }}>
             🎉 {promoLabel}
           </span>
         )}
@@ -89,10 +103,50 @@ export default function MenuItem({ item, promotion }) {
           <p className="text-gray-300 text-sm mb-3 line-clamp-2 leading-relaxed">{item.description}</p>
         )}
 
-        {/* ── 2D price table ── */}
-        {hasVariants ? (
-          hasMods ? (
-            /* Matrix: sizes × modifiers */
+        {/* ── Nuevo formato: selector interactivo (extras per variante) ── */}
+        {isNewFormat ? (
+          <div className="mt-3 space-y-2.5">
+            {/* Tamaños */}
+            <div className="flex flex-wrap gap-1.5">
+              {item.variants.map((v, i) => (
+                <button key={i} type="button"
+                  onClick={() => { setSelVI(i); setSelMI(0); }}
+                  className={pill}
+                  style={{
+                    background:  selVI === i ? '#F84331'               : 'rgba(255,255,255,0.07)',
+                    color:       selVI === i ? '#fff'                  : '#d1d5db',
+                    borderColor: selVI === i ? '#F84331'               : 'rgba(255,255,255,0.1)',
+                  }}>
+                  {v.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Extras del tamaño seleccionado */}
+            {hasVarMods && (
+              <div className="flex flex-wrap gap-1.5">
+                {variantMods.map((m, i) => (
+                  <button key={i} type="button" onClick={() => setSelMI(i)}
+                    className={pill}
+                    style={{
+                      background:  selMI === i ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)',
+                      color:       selMI === i ? '#fff'                   : '#9ca3af',
+                      borderColor: selMI === i ? 'rgba(255,255,255,0.3)'  : 'rgba(255,255,255,0.08)',
+                    }}>
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="pt-0.5">
+              <PriceDisplay price={interactivePrice} promo={promotion} large />
+            </div>
+          </div>
+
+        ) : isLegacy ? (
+          /* ── Legado: tabla completa (modifiers globales + prices[]) ── */
+          item.modifiers.length > 1 ? (
             <div className="mt-3 overflow-x-auto -mx-1 px-1">
               <table className="w-full text-sm border-collapse">
                 <thead>
@@ -107,9 +161,7 @@ export default function MenuItem({ item, promotion }) {
                 </thead>
                 <tbody>
                   {item.variants.map((v, vi) => (
-                    <tr key={vi}
-                      className="border-t"
-                      style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                    <tr key={vi} className="border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                       <td className="py-2 pr-3 text-gray-300 font-medium text-sm whitespace-nowrap">{v.name}</td>
                       {item.modifiers.map((_, mi) => (
                         <td key={mi} className="py-2 px-2 text-center">
@@ -121,14 +173,10 @@ export default function MenuItem({ item, promotion }) {
                 </tbody>
               </table>
             </div>
-
           ) : (
-            /* Only sizes, no modifiers */
             <div className="mt-3 space-y-0">
               {item.variants.map((v, vi) => (
-                <div key={vi}
-                  className="flex items-center justify-between py-2 border-t"
-                  style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div key={vi} className="flex items-center justify-between py-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                   <span className="text-gray-300 font-medium text-sm">{v.name}</span>
                   <CellPrice price={v.prices?.[0] ?? 0} promo={promotion} />
                 </div>
@@ -136,8 +184,19 @@ export default function MenuItem({ item, promotion }) {
             </div>
           )
 
+        ) : hasVariants ? (
+          /* ── Solo tamaños sin extras ── */
+          <div className="mt-3 space-y-0">
+            {item.variants.map((v, vi) => (
+              <div key={vi} className="flex items-center justify-between py-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                <span className="text-gray-300 font-medium text-sm">{v.name}</span>
+                <CellPrice price={v.price ?? v.prices?.[0] ?? 0} promo={promotion} />
+              </div>
+            ))}
+          </div>
+
         ) : item.options?.length > 0 ? (
-          /* ── Flat options ── */
+          /* ── Lista de opciones ── */
           <div className="flex flex-col gap-2 mt-3">
             {item.options.map((opt, i) => (
               <div key={i} className="flex items-center justify-between px-4 py-2.5"
@@ -149,7 +208,7 @@ export default function MenuItem({ item, promotion }) {
           </div>
 
         ) : (
-          /* ── Single price ── */
+          /* ── Precio único ── */
           <div className="mt-3">
             <PriceDisplay price={item.price} promo={promotion} large />
           </div>

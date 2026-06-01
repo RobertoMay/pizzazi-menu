@@ -2,15 +2,16 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Image as ImageIcon, Plus, Trash2, X } from 'react-feather';
 import { createProduct, updateProduct } from '../../services/api';
 
-interface Option   { name: string; price: string; }
-interface Variant  { name: string; prices: string[]; } // prices[i] = price for modifiers[i]
+interface VarMod  { name: string; price: string; }
+interface Variant { name: string; price: string; modifiers: VarMod[]; }
+interface Option  { name: string; price: string; }
 
 type PricingMode = 'single' | 'options' | 'variants';
 
 interface Product {
   _id: string; name: string; description?: string; price: number;
   options?:   { name: string; price: number }[];
-  variants?:  { name: string; prices?: number[]; price?: number }[];
+  variants?:  { name: string; price?: number; prices?: number[]; modifiers?: { name: string; price: number }[] }[];
   modifiers?: { name: string }[];
   image?: string; category?: string;
 }
@@ -41,11 +42,11 @@ function SelectField({ label, value, onChange, children }: {
   );
 }
 
-const fieldStyle = { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' };
-const focusRed  = (e: React.FocusEvent<HTMLElement>) => { (e.currentTarget as HTMLElement).style.borderColor = '#F84331'; };
-const blurGray  = (e: React.FocusEvent<HTMLElement>) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)'; };
-const fieldClass = 'w-full rounded-xl px-4 py-3 text-white text-base outline-none transition-all placeholder-gray-600';
-const priceInput = 'w-full rounded-xl pl-7 pr-3 py-3 text-white text-base outline-none transition-all';
+const fieldStyle  = { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' };
+const focusRed    = (e: React.FocusEvent<HTMLElement>) => { (e.currentTarget as HTMLElement).style.borderColor = '#F84331'; };
+const blurGray    = (e: React.FocusEvent<HTMLElement>) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)'; };
+const fieldClass  = 'w-full rounded-xl px-4 py-3 text-white text-base outline-none transition-all placeholder-gray-600';
+const priceInput  = 'w-full rounded-xl pl-7 pr-3 py-3 text-white text-base outline-none transition-all';
 
 const detectMode = (p?: Product | null): PricingMode => {
   if (p?.variants?.length)  return 'variants';
@@ -56,8 +57,18 @@ const detectMode = (p?: Product | null): PricingMode => {
 const DEFAULT_MOD_NAMES = ['Sencilla', 'Orilla de queso'];
 const DEFAULT_VARIANT_NAMES = ['Chico', 'Mediano', 'Grande', 'Familiar'];
 
-const makeVariants = (modCount: number): Variant[] =>
-  DEFAULT_VARIANT_NAMES.map(name => ({ name, prices: Array(Math.max(1, modCount)).fill('') }));
+const toVariants = (p: Product, globalMods: string[]): Variant[] => {
+  if (!p.variants?.length) return DEFAULT_VARIANT_NAMES.map(name => ({
+    name, price: '', modifiers: globalMods.map(n => ({ name: n, price: '' })),
+  }));
+  return p.variants.map(v => {
+    if (v.modifiers?.length)
+      return { name: v.name, price: '', modifiers: v.modifiers.map(m => ({ name: m.name, price: String(m.price ?? '') })) };
+    if (p.modifiers?.length && v.prices?.length)
+      return { name: v.name, price: '', modifiers: p.modifiers.map((m, i) => ({ name: m.name, price: String(v.prices![i] ?? '') })) };
+    return { name: v.name, price: String(v.price ?? v.prices?.[0] ?? ''), modifiers: [] };
+  });
+};
 
 export default function ProductModal({ product, categories, branchId, onClose, onSaved }: Props) {
   const [pricingMode, setPricingMode] = useState<PricingMode>(detectMode(product));
@@ -65,7 +76,7 @@ export default function ProductModal({ product, categories, branchId, onClose, o
   const [description, setDescription] = useState(product?.description ?? '');
   const [price,       setPrice]       = useState(product?.price?.toString() ?? '');
   const [category,    setCategory]    = useState(() => {
-    const cat = product?.category as any;
+    const cat = product?.category as unknown as { _id?: string } | string | undefined;
     return typeof cat === 'object' ? (cat?._id ?? '') : (cat ?? '');
   });
 
@@ -75,22 +86,16 @@ export default function ProductModal({ product, categories, branchId, onClose, o
       : [{ name: 'Sencilla', price: '' }, { name: 'Con orilla de queso', price: '' }]
   );
 
-  // modifier names only (no prices here)
-  const [modNames, setModNames] = useState<string[]>(() => {
-    if (product?.modifiers?.length) return product.modifiers.map(m => m.name);
-    return DEFAULT_MOD_NAMES;
-  });
+  // Global modifier names — modifican todos los tamaños a la vez
+  const [modNames, setModNames] = useState<string[]>(() =>
+    product?.modifiers?.length ? product.modifiers.map(m => m.name) : DEFAULT_MOD_NAMES
+  );
 
-  // variants: each has a prices[] array aligned with modNames
-  const [variants, setVariants] = useState<Variant[]>(() => {
-    if (product?.variants?.length) {
-      return product.variants.map(v => ({
-        name: v.name,
-        prices: v.prices ? v.prices.map(String) : [String(v.price ?? '')],
-      }));
-    }
-    return makeVariants(DEFAULT_MOD_NAMES.length);
-  });
+  const [variants, setVariants] = useState<Variant[]>(() =>
+    product ? toVariants(product, product?.modifiers?.map(m => m.name) ?? DEFAULT_MOD_NAMES) : DEFAULT_VARIANT_NAMES.map(name => ({
+      name, price: '', modifiers: DEFAULT_MOD_NAMES.map(n => ({ name: n, price: '' })),
+    }))
+  );
 
   const [imageFile,    setImageFile]    = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(product?.image ?? null);
@@ -98,10 +103,7 @@ export default function ProductModal({ product, categories, branchId, onClose, o
   const [error,        setError]        = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
+  useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = ''; }; }, []);
 
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,33 +112,56 @@ export default function ProductModal({ product, categories, branchId, onClose, o
     setImagePreview(URL.createObjectURL(file));
   };
 
-  // Options helpers
   const updateOption = (i: number, f: 'name' | 'price', v: string) =>
     setOptions(prev => prev.map((o, idx) => idx === i ? { ...o, [f]: v } : o));
 
-  // Modifier name helpers — keep variants.prices[] in sync
-  const addModifier = () => {
+  // ── Global modifiers (sync to all variants) ───────────────────────
+  const addGlobalMod = () => {
     setModNames(ms => [...ms, '']);
-    setVariants(vs => vs.map(v => ({ ...v, prices: [...v.prices, ''] })));
+    setVariants(vs => vs.map(v => ({ ...v, modifiers: [...v.modifiers, { name: '', price: '' }] })));
   };
-  const removeModifier = (mi: number) => {
-    setModNames(ms => ms.filter((_, i) => i !== mi));
-    setVariants(vs => vs.map(v => ({ ...v, prices: v.prices.filter((_, i) => i !== mi) })));
-  };
-  const updateModName = (mi: number, val: string) =>
-    setModNames(ms => ms.map((m, i) => i === mi ? val : m));
 
-  // Variant helpers
-  const addVariant = () =>
-    setVariants(vs => [...vs, { name: '', prices: Array(Math.max(1, modNames.length)).fill('') }]);
-  const removeVariant = (vi: number) =>
-    setVariants(vs => vs.filter((_, i) => i !== vi));
+  const removeGlobalMod = (mi: number) => {
+    const nameToRemove = modNames[mi];
+    setModNames(ms => ms.filter((_, i) => i !== mi));
+    // Remove from all variants where name matches
+    setVariants(vs => vs.map(v => ({
+      ...v,
+      modifiers: v.modifiers.filter(m => m.name !== nameToRemove),
+    })));
+  };
+
+  const updateGlobalModName = (mi: number, val: string) => {
+    const oldName = modNames[mi];
+    setModNames(ms => ms.map((m, i) => i === mi ? val : m));
+    // Rename in all variants where name matches old name
+    setVariants(vs => vs.map(v => ({
+      ...v,
+      modifiers: v.modifiers.map(m => m.name === oldName ? { ...m, name: val } : m),
+    })));
+  };
+
+  // ── Per-variant controls ──────────────────────────────────────────
+  const addVariant = () => {
+    const template = modNames.map(n => ({ name: n, price: '' }));
+    setVariants(vs => [...vs, { name: '', price: '', modifiers: template }]);
+  };
+  const removeVariant = (vi: number) => setVariants(vs => vs.filter((_, i) => i !== vi));
   const updateVariantName = (vi: number, val: string) =>
     setVariants(vs => vs.map((v, i) => i === vi ? { ...v, name: val } : v));
-  const updateVariantPrice = (vi: number, mi: number, val: string) =>
+  const updateVariantBasePrice = (vi: number, val: string) =>
+    setVariants(vs => vs.map((v, i) => i === vi ? { ...v, price: val } : v));
+
+  // Add / remove / update an individual modifier in a specific size
+  const addVarMod = (vi: number) =>
     setVariants(vs => vs.map((v, i) => i === vi
-      ? { ...v, prices: v.prices.map((p, j) => j === mi ? val : p) }
-      : v));
+      ? { ...v, modifiers: [...v.modifiers, { name: '', price: '' }] } : v));
+  const removeVarMod = (vi: number, mi: number) =>
+    setVariants(vs => vs.map((v, i) => i === vi
+      ? { ...v, modifiers: v.modifiers.filter((_, j) => j !== mi) } : v));
+  const updateVarMod = (vi: number, mi: number, field: 'name' | 'price', val: string) =>
+    setVariants(vs => vs.map((v, i) => i === vi
+      ? { ...v, modifiers: v.modifiers.map((m, j) => j === mi ? { ...m, [field]: val } : m) } : v));
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -152,31 +177,23 @@ export default function ProductModal({ product, categories, branchId, onClose, o
 
       if (pricingMode === 'single') {
         fd.append('price', price);
-        fd.append('options',   JSON.stringify([]));
-        fd.append('variants',  JSON.stringify([]));
-        fd.append('modifiers', JSON.stringify([]));
+        fd.append('options', JSON.stringify([])); fd.append('variants', JSON.stringify([])); fd.append('modifiers', JSON.stringify([]));
 
       } else if (pricingMode === 'options') {
-        const opts = options.filter(o => o.name.trim() && o.price)
-          .map(o => ({ name: o.name.trim(), price: parseFloat(o.price) }));
-        fd.append('options',   JSON.stringify(opts));
-        fd.append('variants',  JSON.stringify([]));
-        fd.append('modifiers', JSON.stringify([]));
+        const opts = options.filter(o => o.name.trim() && o.price).map(o => ({ name: o.name.trim(), price: parseFloat(o.price) }));
+        fd.append('options', JSON.stringify(opts)); fd.append('variants', JSON.stringify([])); fd.append('modifiers', JSON.stringify([]));
         fd.append('price', opts[0]?.price?.toString() ?? '0');
 
       } else {
-        const mods = modNames.map(n => n.trim()).filter(Boolean);
-        const vars = variants
-          .filter(v => v.name.trim() && v.prices.some(p => p !== ''))
-          .map(v => ({
-            name: v.name.trim(),
-            prices: v.prices.map(p => parseFloat(p || '0')),
-          }));
-        if (!vars.length) { setError('Agrega al menos un tamaño con precio'); setLoading(false); return; }
-        fd.append('variants',  JSON.stringify(vars));
-        fd.append('modifiers', JSON.stringify(mods.map(n => ({ name: n }))));
-        fd.append('options',   JSON.stringify([]));
-        fd.append('price', vars[0].prices[0]?.toString() ?? '0');
+        const vars = variants.filter(v => v.name.trim()).map(v => ({
+          name:      v.name.trim(),
+          price:     v.modifiers.length === 0 ? parseFloat(v.price || '0') : undefined,
+          modifiers: v.modifiers.map(m => ({ name: m.name.trim(), price: parseFloat(m.price || '0') })),
+        }));
+        if (!vars.length) { setError('Agrega al menos un tamaño'); setLoading(false); return; }
+        const firstPrice = vars[0].modifiers[0]?.price ?? vars[0].price ?? 0;
+        fd.append('variants', JSON.stringify(vars)); fd.append('modifiers', JSON.stringify([])); fd.append('options', JSON.stringify([]));
+        fd.append('price', String(firstPrice));
       }
 
       if (product) await updateProduct(product._id, fd);
@@ -184,12 +201,8 @@ export default function ProductModal({ product, categories, branchId, onClose, o
       onSaved();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
-
-  const hasModifiers = modNames.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -200,23 +213,21 @@ export default function ProductModal({ product, categories, branchId, onClose, o
         <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <h2 className="text-white font-bold text-xl">{product ? 'Editar producto' : 'Nuevo producto'}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-1"><X size={22} /></button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white p-1"><X size={22} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
 
-            {/* Image */}
+            {/* Imagen */}
             <div className="relative w-full h-44 rounded-xl overflow-hidden flex items-center justify-center cursor-pointer group"
               style={{ background: 'rgba(255,255,255,0.04)', border: '1.5px dashed rgba(255,255,255,0.15)' }}
               onClick={() => fileRef.current?.click()}>
               {imagePreview ? (
-                <>
-                  <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+                <><img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <p className="text-white text-base font-semibold">Cambiar imagen</p>
-                  </div>
-                </>
+                  </div></>
               ) : (
                 <div className="text-center pointer-events-none">
                   <ImageIcon className="mx-auto mb-2 text-gray-600" size={32} />
@@ -226,70 +237,56 @@ export default function ProductModal({ product, categories, branchId, onClose, o
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
             </div>
 
-            {/* Name */}
+            {/* Nombre */}
             <div>
               <label className="block text-gray-300 text-sm mb-2">Nombre *</label>
-              <input value={name} onChange={e => setName(e.target.value)} required
-                placeholder="Nombre del producto"
-                className={fieldClass} style={{ ...fieldStyle }}
-                onFocus={focusRed} onBlur={blurGray} />
+              <input value={name} onChange={e => setName(e.target.value)} required placeholder="Nombre del producto"
+                className={fieldClass} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
             </div>
 
-            {/* Description */}
+            {/* Descripción */}
             <div>
               <label className="block text-gray-300 text-sm mb-2">Descripción</label>
               <textarea value={description} onChange={e => setDescription(e.target.value)}
                 placeholder="Ingredientes o descripción breve" rows={2}
-                className={`${fieldClass} resize-none`} style={{ ...fieldStyle }}
-                onFocus={focusRed} onBlur={blurGray} />
+                className={`${fieldClass} resize-none`} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
             </div>
 
-            {/* Category */}
+            {/* Categoría */}
             <SelectField label="Categoría" value={category} onChange={setCategory}>
               <option value="" style={{ background: '#1c1c2e' }}>Sin categoría</option>
-              {categories.map(c => (
-                <option key={c._id} value={c._id} style={{ background: '#1c1c2e' }}>{c.name}</option>
-              ))}
+              {categories.map(c => <option key={c._id} value={c._id} style={{ background: '#1c1c2e' }}>{c.name}</option>)}
             </SelectField>
 
-            {/* Pricing mode */}
+            {/* Tipo de precio */}
             <div>
               <label className="block text-gray-300 text-sm mb-2">Tipo de precio</label>
               <div className="grid grid-cols-3 gap-2">
-                {([
-                  { val: 'single',   label: 'Único' },
-                  { val: 'options',  label: 'Lista' },
-                  { val: 'variants', label: 'Tamaños' },
-                ] as { val: PricingMode; label: string }[]).map(({ val, label }) => (
+                {([{ val: 'single', label: 'Único' }, { val: 'options', label: 'Lista' }, { val: 'variants', label: 'Tamaños' }] as { val: PricingMode; label: string }[]).map(({ val, label }) => (
                   <button key={val} type="button" onClick={() => setPricingMode(val)}
                     className="py-2.5 rounded-xl text-sm font-semibold transition-all"
-                    style={{
-                      background: pricingMode === val ? '#F84331' : 'rgba(255,255,255,0.06)',
-                      color:      pricingMode === val ? '#fff'    : '#9ca3af',
-                    }}>
+                    style={{ background: pricingMode === val ? '#F84331' : 'rgba(255,255,255,0.06)', color: pricingMode === val ? '#fff' : '#9ca3af' }}>
                     {label}
                   </button>
                 ))}
               </div>
               <p className="text-gray-600 text-xs mt-1.5">
-                {pricingMode === 'single'   && 'Un precio fijo para el producto.'}
-                {pricingMode === 'options'  && 'Varios precios en lista (ej. Chico $99, Grande $149).'}
-                {pricingMode === 'variants' && 'Tamaños × extras con precio individual por combinación.'}
+                {pricingMode === 'single' && 'Un precio fijo para el producto.'}
+                {pricingMode === 'options' && 'Varios precios en lista (ej. Chico $99, Grande $149).'}
+                {pricingMode === 'variants' && 'Tamaños con extras — puedes ajustar individualmente cada tamaño.'}
               </p>
             </div>
 
-            {/* ── Single price ── */}
+            {/* Precio único */}
             {pricingMode === 'single' && (
               <div>
                 <label className="block text-gray-300 text-sm mb-2">Precio *</label>
-                <input type="number" min="0" step="0.01" value={price}
-                  onChange={e => setPrice(e.target.value)} required placeholder="0.00"
-                  className={fieldClass} style={{ ...fieldStyle }}
-                  onFocus={focusRed} onBlur={blurGray} />
+                <input type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required
+                  placeholder="0.00" className={fieldClass} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
               </div>
             )}
 
-            {/* ── Flat options ── */}
+            {/* Lista */}
             {pricingMode === 'options' && (
               <div className="space-y-3">
                 <label className="block text-gray-300 text-sm">Opciones</label>
@@ -300,18 +297,13 @@ export default function ProductModal({ product, categories, branchId, onClose, o
                       <span className="text-gray-400 text-sm font-medium">Opción {i + 1}</span>
                       {options.length > 1 && (
                         <button type="button" onClick={() => setOptions(o => o.filter((_, idx) => idx !== i))}
-                          className="text-gray-500 hover:text-red-400 transition-colors">
-                          <Trash2 size={16} />
-                        </button>
+                          className="text-gray-500 hover:text-red-400"><Trash2 size={16} /></button>
                       )}
                     </div>
-                    <input value={opt.name} onChange={e => updateOption(i, 'name', e.target.value)}
-                      placeholder="Nombre" className={fieldClass} style={{ ...fieldStyle }}
-                      onFocus={focusRed} onBlur={blurGray} />
-                    <input type="number" min="0" step="0.01" value={opt.price}
-                      onChange={e => updateOption(i, 'price', e.target.value)} placeholder="Precio"
-                      className={fieldClass} style={{ ...fieldStyle }}
-                      onFocus={focusRed} onBlur={blurGray} />
+                    <input value={opt.name} onChange={e => updateOption(i, 'name', e.target.value)} placeholder="Nombre"
+                      className={fieldClass} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
+                    <input type="number" min="0" step="0.01" value={opt.price} onChange={e => updateOption(i, 'price', e.target.value)}
+                      placeholder="Precio" className={fieldClass} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
                   </div>
                 ))}
                 <button type="button" onClick={() => setOptions(o => [...o, { name: '', price: '' }])}
@@ -321,18 +313,18 @@ export default function ProductModal({ product, categories, branchId, onClose, o
               </div>
             )}
 
-            {/* ── Variants × Modifiers (2D price matrix) ── */}
+            {/* Tamaños */}
             {pricingMode === 'variants' && (
-              <div className="space-y-6">
+              <div className="space-y-5">
 
-                {/* Extras (modifier names) */}
+                {/* ── Extras globales (aplican a TODOS los tamaños) ── */}
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2">
                     <div>
                       <p className="text-gray-300 text-sm font-medium">Tipos de orilla / Extras</p>
-                      <p className="text-gray-600 text-xs">Opcional — si el producto no tiene extras déjalo vacío</p>
+                      <p className="text-gray-600 text-xs">Al agregar o quitar aquí se aplica a todos los tamaños</p>
                     </div>
-                    <button type="button" onClick={addModifier}
+                    <button type="button" onClick={addGlobalMod}
                       className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg flex-shrink-0"
                       style={{ background: 'rgba(248,67,49,0.15)', color: '#F84331' }}>
                       <Plus size={12} /> Agregar
@@ -344,12 +336,11 @@ export default function ProductModal({ product, categories, branchId, onClose, o
                     <div className="space-y-2">
                       {modNames.map((m, mi) => (
                         <div key={mi} className="flex gap-2 items-center">
-                          <input value={m} onChange={e => updateModName(mi, e.target.value)}
+                          <input value={m} onChange={e => updateGlobalModName(mi, e.target.value)}
                             placeholder="Ej. Orilla de queso"
-                            className={`${fieldClass} flex-1`} style={{ ...fieldStyle }}
-                            onFocus={focusRed} onBlur={blurGray} />
-                          <button type="button" onClick={() => removeModifier(mi)}
-                            className="p-2.5 rounded-xl text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
+                            className={`${fieldClass} flex-1`} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
+                          <button type="button" onClick={() => removeGlobalMod(mi)}
+                            className="p-2.5 rounded-xl text-gray-500 hover:text-red-400 flex-shrink-0"
                             style={{ background: 'rgba(255,255,255,0.06)' }}>
                             <Trash2 size={15} />
                           </button>
@@ -359,7 +350,7 @@ export default function ProductModal({ product, categories, branchId, onClose, o
                   )}
                 </div>
 
-                {/* Variants with per-modifier prices */}
+                {/* ── Tamaños con control individual ── */}
                 <div>
                   <p className="text-gray-300 text-sm font-medium mb-3">Tamaños y precios *</p>
                   <div className="space-y-3">
@@ -367,55 +358,56 @@ export default function ProductModal({ product, categories, branchId, onClose, o
                       <div key={vi} className="rounded-xl p-4 space-y-3"
                         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
 
-                        {/* Variant name row */}
+                        {/* Nombre */}
                         <div className="flex items-center gap-2">
-                          <input value={v.name} onChange={e => updateVariantName(vi, e.target.value)}
-                            placeholder="Ej. Grande"
-                            className={`${fieldClass} flex-1`} style={{ ...fieldStyle }}
-                            onFocus={focusRed} onBlur={blurGray} />
+                          <input value={v.name} onChange={e => updateVariantName(vi, e.target.value)} placeholder="Ej. Grande"
+                            className={`${fieldClass} flex-1`} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
                           {variants.length > 1 && (
                             <button type="button" onClick={() => removeVariant(vi)}
-                              className="p-2.5 rounded-xl text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
+                              className="p-2.5 rounded-xl text-gray-500 hover:text-red-400 flex-shrink-0"
                               style={{ background: 'rgba(255,255,255,0.06)' }}>
                               <Trash2 size={15} />
                             </button>
                           )}
                         </div>
 
-                        {/* Price inputs: one per modifier (or one base price) */}
-                        <div className="grid grid-cols-2 gap-2">
-                          {hasModifiers ? (
-                            modNames.map((mName, mi) => (
-                              <div key={mi}>
-                                <label className="block text-gray-600 text-xs mb-1 truncate">
-                                  {mName || `Extra ${mi + 1}`}
-                                </label>
-                                <div className="relative">
+                        {/* Extras de este tamaño (pueden diferir del global) */}
+                        {v.modifiers.length > 0 ? (
+                          <div className="space-y-2">
+                            {v.modifiers.map((m, mi) => (
+                              <div key={mi} className="flex gap-2 items-center">
+                                <span className="text-gray-500 text-xs w-24 flex-shrink-0 truncate" title={m.name}>
+                                  {m.name || `Extra ${mi + 1}`}
+                                </span>
+                                <div className="relative flex-1">
                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
-                                  <input type="number" min="0" step="0.01"
-                                    value={v.prices[mi] ?? ''}
-                                    onChange={e => updateVariantPrice(vi, mi, e.target.value)}
-                                    placeholder="0.00"
-                                    className={priceInput} style={{ ...fieldStyle }}
-                                    onFocus={focusRed} onBlur={blurGray} />
+                                  <input type="number" min="0" step="0.01" value={m.price}
+                                    onChange={e => updateVarMod(vi, mi, 'price', e.target.value)}
+                                    placeholder="0.00" className={priceInput} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
                                 </div>
+                                <button type="button" onClick={() => removeVarMod(vi, mi)}
+                                  title="Quitar solo de este tamaño"
+                                  className="p-2 rounded-lg text-gray-600 hover:text-red-400 flex-shrink-0"
+                                  style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                  <Trash2 size={13} />
+                                </button>
                               </div>
-                            ))
-                          ) : (
-                            <div className="col-span-2">
-                              <label className="block text-gray-600 text-xs mb-1">Precio</label>
-                              <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
-                                <input type="number" min="0" step="0.01"
-                                  value={v.prices[0] ?? ''}
-                                  onChange={e => updateVariantPrice(vi, 0, e.target.value)}
-                                  placeholder="0.00"
-                                  className={priceInput} style={{ ...fieldStyle }}
-                                  onFocus={focusRed} onBlur={blurGray} />
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">$</span>
+                            <input type="number" min="0" step="0.01" value={v.price}
+                              onChange={e => updateVariantBasePrice(vi, e.target.value)}
+                              placeholder="Precio" className={priceInput} style={{ ...fieldStyle }} onFocus={focusRed} onBlur={blurGray} />
+                          </div>
+                        )}
+
+                        <button type="button" onClick={() => addVarMod(vi)}
+                          className="flex items-center gap-1 text-xs font-semibold"
+                          style={{ color: '#6b7280' }}>
+                          <Plus size={11} /> Agregar extra solo a este tamaño
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -430,13 +422,10 @@ export default function ProductModal({ product, categories, branchId, onClose, o
             {error && <p className="text-red-400 text-sm">{error}</p>}
           </div>
 
-          <div className="flex gap-3 px-5 py-4 flex-shrink-0"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="flex gap-3 px-5 py-4 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             <button type="button" onClick={onClose}
               className="flex-1 py-3 rounded-xl text-base font-semibold text-gray-300"
-              style={{ background: 'rgba(255,255,255,0.06)' }}>
-              Cancelar
-            </button>
+              style={{ background: 'rgba(255,255,255,0.06)' }}>Cancelar</button>
             <button type="submit" disabled={loading}
               className="flex-1 py-3 rounded-xl text-base font-bold text-white hover:opacity-90 disabled:opacity-50"
               style={{ background: '#F84331' }}>
