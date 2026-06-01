@@ -1,33 +1,28 @@
-import React from 'react';
 import { Phone } from 'react-feather';
 
-export default function Locations({ locations }) {
+export default function Locations({ branch }) {
+  if (!branch) return null;
+
   return (
-    <div className="mt-12">
+    <div className="mt-12 mb-12">
       <h2 className="text-red-500 text-3xl font-bold text-center mb-8">
         Nuestras Sucursales
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {locations.map((location, index) => (
-          <div key={index} className="bg-gray-900 rounded-lg p-6 text-center">
-            <h3 className="text-red-500 text-xl font-bold mb-4">
-              {location.name}
-            </h3>
-            <div className="space-y-2">
-              {location.phones.map((phone, phoneIndex) => (
-                <div
-                  key={phoneIndex}
-                  className="flex items-center justify-center space-x-2"
-                >
-                  <Phone className="text-gray-400 w-4 h-4" />
-                  <a href={`tel:${phone}`} className="text-gray-300">
-                    {phone}
-                  </a>
-                </div>
-              ))}
-            </div>
+      <div className="flex justify-center">
+        <div className="rounded-2xl p-6 text-center w-full max-w-sm border border-white/5" style={{ background: 'linear-gradient(160deg,#1c1c2e,#0e0e18)' }}>
+          <h3 className="text-red-500 text-xl font-bold mb-2">{branch.name}</h3>
+          {branch.address && (
+            <p className="text-gray-400 text-sm mb-4">{branch.address}</p>
+          )}
+          <div className="space-y-2">
+            {branch.phones?.map((phone, i) => (
+              <div key={i} className="flex items-center justify-center space-x-2">
+                <Phone className="text-gray-400 w-4 h-4" />
+                <a href={`tel:${phone}`} className="text-gray-300">{phone}</a>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
