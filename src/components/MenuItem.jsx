@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 const formatPromoLabel = (promo) => {
   if (!promo) return null;
   switch (promo.type) {
@@ -52,24 +50,15 @@ export default function MenuItem({ item, promotion }) {
   const promoLabel  = formatPromoLabel(promotion);
   const hasVariants = item.variants?.length > 0;
 
-  // Detectar formato: nuevo (modifiers por variante) vs legado (modifiers globales)
-  const isNewFormat  = hasVariants && item.variants.some(v => v.modifiers?.length > 0);
-  const isLegacy     = hasVariants && !isNewFormat && item.modifiers?.length > 0;
+  // Nuevo formato: variants con modifiers propios
+  const isNewFormat = hasVariants && item.variants.some(v => v.modifiers?.length > 0);
+  // Legado: modifiers globales + prices[]
+  const isLegacy    = hasVariants && !isNewFormat && item.modifiers?.length > 0;
 
-  const [selVI, setSelVI] = useState(0);
-  const [selMI, setSelMI] = useState(0);
-
-  // Para el formato nuevo: los extras del tamaño seleccionado pueden variar
-  const selectedVariant = hasVariants ? item.variants[selVI] : null;
-  const variantMods     = selectedVariant?.modifiers ?? [];
-  const hasVarMods      = variantMods.length > 0;
-
-  // Precio para el formato interactivo (nuevo formato)
-  const interactivePrice = isNewFormat
-    ? (hasVarMods ? (variantMods[selMI]?.price ?? 0) : (selectedVariant?.price ?? selectedVariant?.prices?.[0] ?? 0))
-    : null;
-
-  const pill = 'px-3 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer select-none border';
+  // Columnas para la tabla del nuevo formato (unión de todos los extras)
+  const newCols = isNewFormat
+    ? [...new Set(item.variants.flatMap(v => v.modifiers?.map(m => m.name) ?? []))]
+    : [];
 
   return (
     <div
@@ -103,49 +92,55 @@ export default function MenuItem({ item, promotion }) {
           <p className="text-gray-300 text-sm mb-3 line-clamp-2 leading-relaxed">{item.description}</p>
         )}
 
-        {/* ── Nuevo formato: selector interactivo (extras per variante) ── */}
+        {/* ── Nuevo formato: tabla con extras por variante ── */}
         {isNewFormat ? (
-          <div className="mt-3 space-y-2.5">
-            {/* Tamaños */}
-            <div className="flex flex-wrap gap-1.5">
-              {item.variants.map((v, i) => (
-                <button key={i} type="button"
-                  onClick={() => { setSelVI(i); setSelMI(0); }}
-                  className={pill}
-                  style={{
-                    background:  selVI === i ? '#F84331'               : 'rgba(255,255,255,0.07)',
-                    color:       selVI === i ? '#fff'                  : '#d1d5db',
-                    borderColor: selVI === i ? '#F84331'               : 'rgba(255,255,255,0.1)',
-                  }}>
-                  {v.name}
-                </button>
+          newCols.length > 0 ? (
+            <div className="mt-3 overflow-x-auto -mx-1 px-1">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr>
+                    <th className="pb-1.5 pr-3 text-left text-gray-500 font-normal text-xs w-24" />
+                    {newCols.map((col, i) => (
+                      <th key={i} className="pb-1.5 px-2 text-center text-gray-400 font-semibold text-xs whitespace-nowrap">
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {item.variants.map((v, vi) => (
+                    <tr key={vi} className="border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                      <td className="py-2 pr-3 text-gray-300 font-medium text-sm whitespace-nowrap">{v.name}</td>
+                      {newCols.map((col, ci) => {
+                        const mod = v.modifiers?.find(m => m.name === col);
+                        return (
+                          <td key={ci} className="py-2 px-2 text-center">
+                            {mod
+                              ? <CellPrice price={mod.price} promo={promotion} />
+                              : <span className="text-gray-700 text-xs">—</span>}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            /* Sin extras — solo precios por tamaño */
+            <div className="mt-3 space-y-0">
+              {item.variants.map((v, vi) => (
+                <div key={vi} className="flex items-center justify-between py-2 border-t"
+                  style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                  <span className="text-gray-300 font-medium text-sm">{v.name}</span>
+                  <CellPrice price={v.price ?? 0} promo={promotion} />
+                </div>
               ))}
             </div>
-
-            {/* Extras del tamaño seleccionado */}
-            {hasVarMods && (
-              <div className="flex flex-wrap gap-1.5">
-                {variantMods.map((m, i) => (
-                  <button key={i} type="button" onClick={() => setSelMI(i)}
-                    className={pill}
-                    style={{
-                      background:  selMI === i ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)',
-                      color:       selMI === i ? '#fff'                   : '#9ca3af',
-                      borderColor: selMI === i ? 'rgba(255,255,255,0.3)'  : 'rgba(255,255,255,0.08)',
-                    }}>
-                    {m.name}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div className="pt-0.5">
-              <PriceDisplay price={interactivePrice} promo={promotion} large />
-            </div>
-          </div>
+          )
 
         ) : isLegacy ? (
-          /* ── Legado: tabla completa (modifiers globales + prices[]) ── */
+          /* ── Legado: tabla modifiers globales + prices[] ── */
           item.modifiers.length > 1 ? (
             <div className="mt-3 overflow-x-auto -mx-1 px-1">
               <table className="w-full text-sm border-collapse">
@@ -176,7 +171,8 @@ export default function MenuItem({ item, promotion }) {
           ) : (
             <div className="mt-3 space-y-0">
               {item.variants.map((v, vi) => (
-                <div key={vi} className="flex items-center justify-between py-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div key={vi} className="flex items-center justify-between py-2 border-t"
+                  style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                   <span className="text-gray-300 font-medium text-sm">{v.name}</span>
                   <CellPrice price={v.prices?.[0] ?? 0} promo={promotion} />
                 </div>
@@ -188,7 +184,8 @@ export default function MenuItem({ item, promotion }) {
           /* ── Solo tamaños sin extras ── */
           <div className="mt-3 space-y-0">
             {item.variants.map((v, vi) => (
-              <div key={vi} className="flex items-center justify-between py-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+              <div key={vi} className="flex items-center justify-between py-2 border-t"
+                style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                 <span className="text-gray-300 font-medium text-sm">{v.name}</span>
                 <CellPrice price={v.price ?? v.prices?.[0] ?? 0} promo={promotion} />
               </div>
