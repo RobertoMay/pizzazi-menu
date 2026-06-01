@@ -174,7 +174,7 @@ export default function MenuPage() {
         </div>
 
         <div className="px-4">
-          <Locations branch={branch} />
+          <Locations />
         </div>
 
       </div>
