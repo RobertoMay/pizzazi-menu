@@ -69,7 +69,7 @@ export default function BranchModal({ branch, onClose, onSaved }: Props) {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-sm rounded-2xl max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto"
         style={{
           background: 'linear-gradient(160deg, #1c1c2e 0%, #0e0e18 100%)',
           border: '1px solid rgba(255,255,255,0.08)',

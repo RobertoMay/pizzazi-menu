@@ -207,7 +207,7 @@ export default function ProductModal({ product, categories, branchId, onClose, o
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl flex flex-col"
+      <div className="relative w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl flex flex-col"
         style={{ background: 'linear-gradient(160deg, #1c1c2e 0%, #0e0e18 100%)', border: '1px solid rgba(255,255,255,0.08)', maxHeight: '92vh' }}>
 
         <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"

@@ -19,7 +19,7 @@ export default function ConfirmModal({ message, onConfirm, onCancel, loading }: 
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
 
       <div
-        className="relative w-full max-w-sm rounded-2xl p-6 text-center"
+        className="relative w-full max-w-md rounded-2xl p-6 text-center"
         style={{
           background: 'linear-gradient(160deg, #1c1c2e 0%, #0e0e18 100%)',
           border: '1px solid rgba(255,255,255,0.08)',

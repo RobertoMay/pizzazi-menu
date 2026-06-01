@@ -131,7 +131,7 @@ export default function PromotionModal({ promotion, categories, branchId, onClos
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="relative w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl flex flex-col"
+        className="relative w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl flex flex-col"
         style={{
           background: 'linear-gradient(160deg, #1c1c2e 0%, #0e0e18 100%)',
           border: '1px solid rgba(255,255,255,0.08)',
