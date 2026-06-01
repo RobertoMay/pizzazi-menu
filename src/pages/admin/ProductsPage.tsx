@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronDown, Edit2, Eye, EyeOff, Plus, Search, Trash2, X } from 'react-feather';
+import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import ProductModal from '../../components/admin/ProductModal';
@@ -73,8 +74,17 @@ export default function ProductsPage() {
   }, [loadProducts, search]);
 
   const handleToggle = async (id: string) => {
-    await toggleProduct(id, branchId);
-    setProducts(ps => ps.map(p => p._id === id ? { ...p, available: !p.available } : p));
+    try {
+      await toggleProduct(id, branchId);
+      setProducts(ps => ps.map(p => {
+        if (p._id !== id) return p;
+        const next = !p.available;
+        toast.success(next ? 'Producto visible' : 'Producto oculto');
+        return { ...p, available: next };
+      }));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al actualizar producto');
+    }
   };
 
   const handleDelete = (product: Product) => {
@@ -83,6 +93,7 @@ export default function ProductsPage() {
       onConfirm: async () => {
         await deleteProduct(product._id, branchId);
         setProducts(ps => ps.filter(p => p._id !== product._id));
+        toast.success('Producto eliminado');
       },
     });
   };
@@ -114,7 +125,11 @@ export default function ProductsPage() {
   const handleConfirm = async () => {
     if (!confirmDialog) return;
     setConfirmLoading(true);
-    try { await confirmDialog.onConfirm(); } finally {
+    try {
+      await confirmDialog.onConfirm();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al completar la acción');
+    } finally {
       setConfirmLoading(false);
       setConfirm(null);
     }

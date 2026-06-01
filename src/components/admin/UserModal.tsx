@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState, useRef } from 'react';
 import { AlertTriangle, CheckCircle, Eye, EyeOff, Loader, X } from 'react-feather';
+import { toast } from 'sonner';
 import { changeUserPassword, createUser, getUsers } from '../../services/api';
 
 type Mode = 'create' | 'password';
@@ -112,12 +113,15 @@ export default function UserModal({ mode, targetUser, branches, isSuperAdmin, on
           payload.role = newRole;
         }
         await createUser(payload);
+        toast.success('Usuario creado');
       } else {
         await changeUserPassword(targetUser!._id, password);
+        toast.success('Contraseña actualizada');
       }
       onSaved();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
+      toast.error(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'react-feather';
+import { toast } from 'sonner';
 import { createCustomer, updateCustomer, getAllBranches } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -39,9 +40,11 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
       const saved = customer
         ? await updateCustomer(customer._id, payload)
         : await createCustomer(payload);
+      toast.success(customer ? 'Cliente guardado' : 'Cliente creado');
       onSaved(saved);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
+      toast.error(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
       setSaving(false);
     }

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import BranchRedirect from './pages/BranchRedirect';
 import MenuPage from './pages/MenuPage';
@@ -38,6 +39,12 @@ function AdminRoute() {
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster
+        theme="dark"
+        position="bottom-right"
+        richColors
+        toastOptions={{ style: { fontFamily: 'system-ui, sans-serif' } }}
+      />
       <AuthProvider>
         <Routes>
           <Route path="/" element={<BranchRedirect />} />

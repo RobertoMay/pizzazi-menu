@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronDown, Edit2, Eye, EyeOff, Plus, Trash2 } from 'react-feather';
+import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import PromotionModal from '../../components/admin/PromotionModal';
@@ -74,8 +75,17 @@ export default function PromotionsPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleToggle = async (id: string) => {
-    await togglePromotion(id, user?.role === 'superadmin' ? branchId : undefined);
-    setPromotions(ps => ps.map(p => p._id === id ? { ...p, active: !p.active } : p));
+    try {
+      await togglePromotion(id, user?.role === 'superadmin' ? branchId : undefined);
+      setPromotions(ps => ps.map(p => {
+        if (p._id !== id) return p;
+        const next = !p.active;
+        toast.success(next ? 'Promoción activada' : 'Promoción desactivada');
+        return { ...p, active: next };
+      }));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al actualizar promoción');
+    }
   };
 
   const handleDelete = (promo: Promotion) => {
@@ -84,6 +94,7 @@ export default function PromotionsPage() {
       onConfirm: async () => {
         await deletePromotion(promo._id, user?.role === 'superadmin' ? branchId : undefined);
         setPromotions(ps => ps.filter(p => p._id !== promo._id));
+        toast.success('Promoción eliminada');
       },
     });
   };
@@ -91,7 +102,11 @@ export default function PromotionsPage() {
   const handleConfirm = async () => {
     if (!confirmDialog) return;
     setConfirmLoading(true);
-    try { await confirmDialog.onConfirm(); } finally {
+    try {
+      await confirmDialog.onConfirm();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al completar la acción');
+    } finally {
       setConfirmLoading(false);
       setConfirmDialog(null);
     }

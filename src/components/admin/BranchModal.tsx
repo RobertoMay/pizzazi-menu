@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Plus, Trash2, X } from 'react-feather';
+import { toast } from 'sonner';
 import { createBranch, updateBranch } from '../../services/api';
 
 interface Branch {
@@ -56,9 +57,11 @@ export default function BranchModal({ branch, onClose, onSaved }: Props) {
       } else {
         await createBranch(payload);
       }
+      toast.success(isEdit ? 'Sucursal guardada' : 'Sucursal creada');
       onSaved();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
+      toast.error(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
       setLoading(false);
     }

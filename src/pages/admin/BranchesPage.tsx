@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Edit2, Eye, EyeOff, MapPin, Phone, Plus, Trash2 } from 'react-feather';
+import { toast } from 'sonner';
 import { getAllBranches, toggleBranch, deleteBranch } from '../../services/api';
 import AdminLayout from '../../components/admin/AdminLayout';
 import BranchModal from '../../components/admin/BranchModal';
@@ -39,9 +40,10 @@ export default function BranchesPage() {
   const handleToggle = async (b: Branch) => {
     try {
       await toggleBranch(b._id);
+      toast.success(b.active ? 'Sucursal desactivada' : 'Sucursal activada');
       load();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error');
+      toast.error(err instanceof Error ? err.message : 'Error al actualizar sucursal');
     }
   };
 
@@ -50,6 +52,7 @@ export default function BranchesPage() {
       message: `¿Eliminar "${b.name}"? Se eliminarán también todos sus productos, categorías y promociones. Esta acción no se puede deshacer.`,
       onConfirm: async () => {
         await deleteBranch(b._id);
+        toast.success('Sucursal eliminada');
         load();
       },
     });
@@ -62,7 +65,7 @@ export default function BranchesPage() {
       await confirmDialog.onConfirm();
       setConfirmDialog(null);
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Error');
+      toast.error(err instanceof Error ? err.message : 'Error al completar la acción');
     } finally {
       setConfirmLoading(false);
     }

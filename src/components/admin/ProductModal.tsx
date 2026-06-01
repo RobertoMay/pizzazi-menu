@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Image as ImageIcon, Plus, Trash2, X } from 'react-feather';
+import { toast } from 'sonner';
 import { createProduct, updateProduct } from '../../services/api';
 
 interface VarMod  { name: string; price: string; }
@@ -198,9 +199,11 @@ export default function ProductModal({ product, categories, branchId, onClose, o
 
       if (product) await updateProduct(product._id, fd);
       else         await createProduct(fd);
+      toast.success(product ? 'Producto actualizado' : 'Producto creado');
       onSaved();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
+      toast.error(err instanceof Error ? err.message : 'Error al guardar');
     } finally { setLoading(false); }
   };
 

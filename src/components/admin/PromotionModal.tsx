@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { X } from 'react-feather';
+import { toast } from 'sonner';
 import { createPromotion, getProducts, updatePromotion } from '../../services/api';
 
 type PromoType = 'special_deal' | 'percentage' | 'fixed_price' | '2x1';
@@ -118,9 +119,11 @@ export default function PromotionModal({ promotion, categories, branchId, onClos
       } else {
         await createPromotion(payload);
       }
+      toast.success(promotion ? 'Promoción guardada' : 'Promoción creada');
       onSaved();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al guardar');
+      toast.error(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
       setLoading(false);
     }

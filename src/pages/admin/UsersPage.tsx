@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronDown, Eye, EyeOff, Key, Plus, Trash2 } from 'react-feather';
+import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ConfirmModal from '../../components/admin/ConfirmModal';
 import UserModal from '../../components/admin/UserModal';
@@ -65,8 +66,17 @@ export default function UsersPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleToggle = async (u: User) => {
-    await toggleUser(u._id);
-    setUsers(ps => ps.map(p => p._id === u._id ? { ...p, active: !p.active } : p));
+    try {
+      await toggleUser(u._id);
+      setUsers(ps => ps.map(p => {
+        if (p._id !== u._id) return p;
+        const next = !p.active;
+        toast.success(next ? 'Usuario activado' : 'Usuario desactivado');
+        return { ...p, active: next };
+      }));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al actualizar usuario');
+    }
   };
 
   const handleDelete = (u: User) => {
@@ -75,6 +85,7 @@ export default function UsersPage() {
       onConfirm: async () => {
         await deleteUser(u._id);
         setUsers(ps => ps.filter(p => p._id !== u._id));
+        toast.success('Usuario eliminado');
       },
     });
   };
@@ -82,7 +93,11 @@ export default function UsersPage() {
   const handleConfirm = async () => {
     if (!confirmDialog) return;
     setConfirmLoading(true);
-    try { await confirmDialog.onConfirm(); } finally {
+    try {
+      await confirmDialog.onConfirm();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al completar la acción');
+    } finally {
       setConfirmLoading(false);
       setConfirmDialog(null);
     }
