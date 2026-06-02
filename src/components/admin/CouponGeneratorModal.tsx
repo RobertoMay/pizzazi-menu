@@ -332,7 +332,7 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
                 </div>
               )}
               <div className={needsValue ? '' : 'col-span-2'}>
-                <label className="block text-xs text-gray-400 mb-1.5">Descripción (opcional)</label>
+                <label className="block text-xs text-gray-400 mb-1.5">Descripción</label>
                 <input type="text" value={description} onChange={e => setDescription(e.target.value)}
                   placeholder="Ej. en pizza grande" className={inp} style={inpStyle} />
               </div>
