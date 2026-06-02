@@ -36,7 +36,6 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
     const digits = phone.trim().replace(/\D/g, '');
     if (!name.trim())          { setError('El nombre es requerido'); return; }
     if (digits.length !== 10)  { setError('El teléfono debe tener exactamente 10 dígitos'); return; }
-    if (!notes.trim())         { setError('La descripción es requerida'); return; }
     setSaving(true);
     try {
       const payload = { name: name.trim(), phone: digits, notes: notes.trim(), ...(isSuperAdmin ? { branch } : {}) };
@@ -117,7 +116,7 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
 
           {/* Notas */}
           <div>
-            <label className="block text-xs text-gray-400 mb-1.5">Descripción *</label>
+            <label className="block text-xs text-gray-400 mb-1.5">Notas (opcional)</label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
