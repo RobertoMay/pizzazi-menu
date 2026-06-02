@@ -73,9 +73,9 @@ export default function AdminPage() {
             ...(user.role !== 'editor' ? [{ label: 'Usuarios', desc: 'Administra los accesos al panel', icon: '👥', path: '/admin/users', ready: true }] : []),
             ...(user.role === 'superadmin' ? [{ label: 'Sucursales', desc: 'Gestiona las sucursales', icon: '📍', path: '/admin/branches', ready: true }] : []),
             { label: 'Código QR', desc: 'Genera y descarga el QR del menú', icon: '📱', path: '/admin/qr', ready: true },
-            { label: 'Clientes', desc: 'Registra y consulta clientes', icon: '🧑‍🤝‍🧑', path: '/admin/customers', ready: false },
-            { label: 'Cupones', desc: 'Genera cupones QR y envíalos por WhatsApp', icon: '🎟️', path: '/admin/coupons', ready: false },
-            { label: 'Escáner', desc: 'Escanea y canjea cupones de clientes', icon: '📷', path: '/admin/scanner', ready: false },
+            { label: 'Clientes', desc: 'Registra y consulta clientes', icon: '🧑‍🤝‍🧑', path: '/admin/customers', ready: true },
+            { label: 'Cupones', desc: 'Genera cupones QR y envíalos por WhatsApp', icon: '🎟️', path: '/admin/coupons', ready: true },
+            { label: 'Escáner', desc: 'Escanea y canjea cupones de clientes', icon: '📷', path: '/admin/scanner', ready: true },
           ].map((mod) =>
             mod.ready ? (
               <Link

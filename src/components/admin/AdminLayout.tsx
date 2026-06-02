@@ -9,6 +9,9 @@ const NAV = [
   { label: '👥 Usuarios',    path: '/admin/users',      roles: ['superadmin', 'admin'] },
   { label: '📍 Sucursales',  path: '/admin/branches',   roles: ['superadmin'] },
   { label: '📱 Código QR',  path: '/admin/qr',         roles: ['superadmin', 'admin', 'editor'] },
+  { label: '🧑‍🤝‍🧑 Clientes',  path: '/admin/customers',  roles: ['superadmin', 'admin', 'editor'] },
+  { label: '🎟️ Cupones',    path: '/admin/coupons',    roles: ['superadmin', 'admin', 'editor'] },
+  { label: '📷 Escáner',    path: '/admin/scanner',    roles: ['superadmin', 'admin', 'editor'] },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
