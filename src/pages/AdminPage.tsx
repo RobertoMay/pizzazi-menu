@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import InstallBanner from '../components/admin/InstallBanner';
 
 const ROLE_LABEL: Record<string, string> = {
   superadmin: 'Super Admin',
@@ -27,6 +28,8 @@ export default function AdminPage() {
   return (
     <div className="menu-bg min-h-screen px-4 py-8">
       <div className="max-w-4xl mx-auto">
+
+        <div className="mb-4"><InstallBanner /></div>
 
         {/* Header */}
         <div className="flex items-center justify-between mb-10">
