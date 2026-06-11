@@ -151,7 +151,9 @@ export const deleteCustomer = (id: string) =>
 
 // ── Coupons ──────────────────────────────────────────────────────
 export const getCoupons = (params: Record<string, string> = {}) =>
-  authFetch(`${API}/coupons?${new URLSearchParams(params)}`);
+  authFetch(`${API}/coupons?${new URLSearchParams(params)}`) as Promise<{
+    coupons: unknown[]; total: number; page: number; pages: number;
+  }>;
 
 export const createCoupon = (data: object) =>
   authFetch(`${API}/coupons`, { method: 'POST', body: JSON.stringify(data) });
@@ -159,8 +161,33 @@ export const createCoupon = (data: object) =>
 export const cancelCoupon = (id: string) =>
   authFetch(`${API}/coupons/${id}/cancel`, { method: 'PATCH' });
 
+export const resendCoupon = (id: string) =>
+  authFetch(`${API}/coupons/${id}/resend`, { method: 'PATCH' });
+
 export const getCouponPublic = (code: string) =>
   fetchJSON(`${API}/coupons/public/${code}`);
 
 export const redeemCouponPublic = (code: string) =>
   fetchJSON(`${API}/coupons/redeem/${code}`, { method: 'POST' });
+
+// ── Push notifications ─────────────────────────────────────────────
+export const getVapidKey = () =>
+  fetchJSON(`${API}/push/vapid-key`) as Promise<{ publicKey: string }>;
+
+export const subscribePush = (sub: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
+  authFetch(`${API}/push/subscribe`, { method: 'POST', body: JSON.stringify({ subscription: sub }) });
+
+export const unsubscribePush = (endpoint: string) =>
+  authFetch(`${API}/push/unsubscribe`, { method: 'POST', body: JSON.stringify({ endpoint }) });
+
+export const getPushSettings = () =>
+  authFetch(`${API}/push/settings`) as Promise<{
+    enabled: boolean; excludedUsers: string[]; hasSubscription: boolean;
+  }>;
+
+export const updatePushSettings = (data: { enabled?: boolean; excludedUsers?: string[] }) =>
+  authFetch(`${API}/push/settings`, { method: 'PATCH', body: JSON.stringify(data) });
+
+// ── Coupon perms ───────────────────────────────────────────────────
+export const updateCouponPerms = (id: string, data: object) =>
+  authFetch(`${API}/users/${id}/coupon-perms`, { method: 'PATCH', body: JSON.stringify(data) });

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut } from 'react-feather';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,7 +24,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     navigate('/admin');
   };
 
+  const navRef = useRef<HTMLDivElement>(null);
   const visibleNav = NAV.filter(n => user && n.roles.includes(user.role));
+
+  useEffect(() => {
+    const el = navRef.current?.querySelector<HTMLElement>('[data-active="true"]');
+    el?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'instant' });
+  }, [location.pathname]);
 
   return (
     <div className="menu-bg min-h-screen">
@@ -61,20 +67,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
 
           {/* Nav pills */}
-          <div className="flex gap-2 px-4 pb-3 overflow-x-auto hide-scrollbar">
-            {visibleNav.map(n => (
-              <Link
-                key={n.path}
-                to={n.path}
-                className="flex-shrink-0 px-4 py-1.5 text-sm font-semibold whitespace-nowrap rounded-full transition-all"
-                style={{
-                  background: location.pathname.startsWith(n.path) ? '#F84331' : 'rgba(255,255,255,0.06)',
-                  color: location.pathname.startsWith(n.path) ? '#fff' : '#9ca3af',
-                }}
-              >
-                {n.label}
-              </Link>
-            ))}
+          <div ref={navRef} className="flex gap-2 px-4 pb-3 overflow-x-auto hide-scrollbar">
+            {visibleNav.map(n => {
+              const active = location.pathname.startsWith(n.path);
+              return (
+                <Link
+                  key={n.path}
+                  to={n.path}
+                  data-active={active ? 'true' : undefined}
+                  className="flex-shrink-0 px-4 py-1.5 text-sm font-semibold whitespace-nowrap rounded-full transition-all"
+                  style={{
+                    background: active ? '#F84331' : 'rgba(255,255,255,0.06)',
+                    color: active ? '#fff' : '#9ca3af',
+                  }}
+                >
+                  {n.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -1,22 +1,39 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronDown, Eye, EyeOff, Key, Plus, Trash2 } from 'react-feather';
+import { Bell, BellOff, ChevronDown, Eye, EyeOff, Key, Plus, Shield, Trash2 } from 'react-feather';
 import { toast } from 'sonner';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ConfirmModal from '../../components/admin/ConfirmModal';
+import CouponPermsModal from '../../components/admin/CouponPermsModal';
 import UserModal from '../../components/admin/UserModal';
 import { useAuth } from '../../contexts/AuthContext';
-import { deleteUser, getBranches, getUsers, toggleUser } from '../../services/api';
+import { usePush } from '../../hooks/usePush';
+import {
+  deleteUser, getBranches, getPushSettings, getUsers,
+  toggleUser, updatePushSettings,
+} from '../../services/api';
 
 interface Branch { _id: string; name: string; }
+
+interface CouponPerms {
+  enabled?: boolean;
+  allowedTypes?: string[];
+  maxDiscountPct?: number;
+  maxFixedAmount?: number | null;
+  workingHoursOnly?: boolean;
+  workingHours?: { from?: string; to?: string };
+  maxCouponsPerDay?: number | null;
+}
+
 interface User {
   _id: string; name: string; username: string;
   role: 'admin' | 'editor';
   branch?: { _id: string; name: string } | null;
   active: boolean;
+  couponPerms?: CouponPerms;
 }
 
 const ROLE_CONFIG = {
-  superadmin: { label: 'Super Admin', bg: 'rgba(248,67,49,0.15)', color: '#F84331' },
+  superadmin: { label: 'Super Admin', bg: 'rgba(248,67,49,0.15)',  color: '#F84331' },
   admin:      { label: 'Admin',       bg: 'rgba(250,204,21,0.15)', color: '#FACC15' },
   editor:     { label: 'Editor',      bg: 'rgba(96,165,250,0.15)', color: '#60a5fa' },
 };
@@ -35,20 +52,29 @@ type ModalState =
 export default function UsersPage() {
   const { user: me } = useAuth();
   const isSuperAdmin = me?.role === 'superadmin';
+  const push         = usePush();
 
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const [branches,       setBranches]       = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState('');
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState<ModalState>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => Promise<void> } | null>(null);
+  const [users,          setUsers]          = useState<User[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [modal,          setModal]          = useState<ModalState>(null);
+  const [permsTarget,    setPermsTarget]    = useState<User | null>(null);
+  const [confirmDialog,  setConfirmDialog]  = useState<{ message: string; onConfirm: () => Promise<void> } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+
+  // Notification settings (superadmin only)
+  const [notifEnabled,   setNotifEnabled]   = useState(true);
+  const [excludedUsers,  setExcludedUsers]  = useState<string[]>([]);
+  const [notifLoading,   setNotifLoading]   = useState(false);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
-    getBranches().then((data: Branch[]) => {
-      setBranches(data);
-    });
+    getBranches().then((data: Branch[]) => setBranches(data));
+    getPushSettings().then(s => {
+      setNotifEnabled(s.enabled);
+      setExcludedUsers(s.excludedUsers);
+    }).catch(() => {});
   }, [isSuperAdmin]);
 
   const load = useCallback(async () => {
@@ -58,9 +84,7 @@ export default function UsersPage() {
       if (isSuperAdmin && selectedBranch) params.branch = selectedBranch;
       const data = await getUsers(params);
       setUsers(data);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [isSuperAdmin, selectedBranch]);
 
   useEffect(() => { load(); }, [load]);
@@ -93,14 +117,42 @@ export default function UsersPage() {
   const handleConfirm = async () => {
     if (!confirmDialog) return;
     setConfirmLoading(true);
+    try { await confirmDialog.onConfirm(); }
+    catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Error al completar la acción'); }
+    finally { setConfirmLoading(false); setConfirmDialog(null); }
+  };
+
+  // Toggle global notifications on/off
+  const handleNotifToggle = async () => {
+    setNotifLoading(true);
     try {
-      await confirmDialog.onConfirm();
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Error al completar la acción');
-    } finally {
-      setConfirmLoading(false);
-      setConfirmDialog(null);
-    }
+      const next = !notifEnabled;
+      await updatePushSettings({ enabled: next });
+      setNotifEnabled(next);
+      toast.success(next ? 'Notificaciones activadas' : 'Notificaciones pausadas');
+    } catch { toast.error('Error al actualizar'); }
+    finally { setNotifLoading(false); }
+  };
+
+  // Subscribe to push notifications
+  const handleSubscribe = async () => {
+    setNotifLoading(true);
+    const ok = await push.subscribe();
+    setNotifLoading(false);
+    if (ok) toast.success('Notificaciones activadas');
+    else if (push.permission === 'denied') toast.error('Permiso denegado. Actívalo en la configuración del navegador.');
+    else toast.error('No se pudo activar. Intenta de nuevo.');
+  };
+
+  // Toggle user exclusion
+  const handleToggleExclude = async (userId: string) => {
+    const next = excludedUsers.includes(userId)
+      ? excludedUsers.filter(id => id !== userId)
+      : [...excludedUsers, userId];
+    try {
+      await updatePushSettings({ excludedUsers: next });
+      setExcludedUsers(next);
+    } catch { toast.error('Error al actualizar'); }
   };
 
   const targetRole = isSuperAdmin ? 'Admin' : 'Editor';
@@ -111,7 +163,6 @@ export default function UsersPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-white text-2xl font-bold">Usuarios</h1>
         <div className="flex items-center gap-3">
-          {/* Branch filter for superadmin */}
           {isSuperAdmin && (
             <div className="relative">
               <select
@@ -139,6 +190,45 @@ export default function UsersPage() {
         </div>
       </div>
 
+      {/* Push notification panel — superadmin only */}
+      {isSuperAdmin && push.supported && (
+        <div className="mb-5 rounded-xl px-4 py-3 flex items-center gap-3"
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <Bell size={16} className={push.subscribed && notifEnabled ? 'text-green-400' : 'text-gray-500'} />
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-sm font-semibold">Notificaciones push</p>
+            <p className="text-gray-500 text-xs">
+              {!push.subscribed
+                ? 'Recibe alertas cuando un editor genere un cupón'
+                : notifEnabled
+                  ? 'Activas — te llegará una alerta por cada cupón generado'
+                  : 'Pausadas — no recibirás alertas por ahora'}
+            </p>
+          </div>
+          {!push.subscribed ? (
+            <button
+              onClick={handleSubscribe}
+              disabled={notifLoading || push.loading}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold disabled:opacity-50 flex-shrink-0"
+              style={{ background: '#4ade80', color: '#000' }}>
+              {push.loading ? '...' : 'Activar'}
+            </button>
+          ) : (
+            <button
+              onClick={handleNotifToggle}
+              disabled={notifLoading}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold disabled:opacity-50 flex-shrink-0"
+              style={{
+                background: notifEnabled ? 'rgba(248,67,49,0.15)' : 'rgba(74,222,128,0.15)',
+                color: notifEnabled ? '#f87171' : '#4ade80',
+                border: `1px solid ${notifEnabled ? 'rgba(248,67,49,0.3)' : 'rgba(74,222,128,0.3)'}`,
+              }}>
+              {notifEnabled ? 'Pausar' : 'Reactivar'}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Info banner for superadmin */}
       {isSuperAdmin && (
         <div className="mb-5 rounded-xl px-4 py-3 text-sm text-gray-400"
@@ -161,7 +251,9 @@ export default function UsersPage() {
       ) : (
         <div className="space-y-3">
           {users.map(u => {
-            const roleCfg = ROLE_CONFIG[u.role] ?? ROLE_CONFIG.editor;
+            const roleCfg   = ROLE_CONFIG[u.role] ?? ROLE_CONFIG.editor;
+            const isExcl    = excludedUsers.includes(u._id);
+            const hasPerms  = u.couponPerms?.enabled;
             return (
               <div
                 key={u._id}
@@ -195,6 +287,12 @@ export default function UsersPage() {
                       }}>
                       {u.active ? 'Activo' : 'Inactivo'}
                     </span>
+                    {hasPerms && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold"
+                        style={{ background: 'rgba(96,165,250,0.1)', color: '#60a5fa' }}>
+                        Cupones ✓
+                      </span>
+                    )}
                   </div>
                   <p className="text-gray-500 text-sm truncate">
                     @{u.username}
@@ -204,6 +302,29 @@ export default function UsersPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 flex-shrink-0">
+                  {/* Mute notifications — superadmin only */}
+                  {isSuperAdmin && push.subscribed && (
+                    <button
+                      onClick={() => handleToggleExclude(u._id)}
+                      className="p-2 rounded-xl transition-colors"
+                      style={{
+                        background: isExcl ? 'rgba(248,67,49,0.1)' : 'rgba(255,255,255,0.05)',
+                        color: isExcl ? '#f87171' : '#6b7280',
+                      }}
+                      title={isExcl ? 'Notificaciones silenciadas' : 'Silenciar notificaciones'}>
+                      {isExcl ? <BellOff size={15} /> : <Bell size={15} />}
+                    </button>
+                  )}
+
+                  {/* Coupon perms */}
+                  <button
+                    onClick={() => setPermsTarget(u)}
+                    className="p-2 rounded-xl text-gray-400 hover:text-blue-400 transition-colors"
+                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                    title="Permisos de cupones">
+                    <Shield size={15} />
+                  </button>
+
                   <button onClick={() => handleToggle(u)}
                     className="p-2 rounded-xl text-gray-400 hover:text-white transition-colors"
                     style={{ background: 'rgba(255,255,255,0.05)' }}
@@ -229,7 +350,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* User modal */}
+      {/* Modals */}
       {modal && (
         <UserModal
           mode={modal.type}
@@ -241,7 +362,19 @@ export default function UsersPage() {
         />
       )}
 
-      {/* Confirm modal */}
+      {permsTarget && (
+        <CouponPermsModal
+          user={permsTarget}
+          onClose={() => setPermsTarget(null)}
+          onSaved={perms => {
+            setUsers(prev => prev.map(u =>
+              u._id === permsTarget._id ? { ...u, couponPerms: perms } : u
+            ));
+            setPermsTarget(null);
+          }}
+        />
+      )}
+
       {confirmDialog && (
         <ConfirmModal
           message={confirmDialog.message}

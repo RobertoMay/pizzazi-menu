@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import jsQR from 'jsqr';
-import { RotateCcw, CameraOff, CheckCircle } from 'react-feather';
+import { RotateCcw, CameraOff, CheckCircle, Search } from 'react-feather';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getCouponPublic, redeemCouponPublic } from '../../services/api';
 
@@ -57,6 +57,8 @@ export default function ScannerPage() {
   const [redeeming,   setRedeeming]   = useState(false);
   const [redeemed,    setRedeemed]    = useState(false);
   const [redeemError, setRedeemError] = useState('');
+  const [manualCode,  setManualCode]  = useState('');
+  const [manualError, setManualError] = useState('');
 
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(animRef.current);
@@ -125,9 +127,34 @@ export default function ScannerPage() {
     setCoupon(null);
     setRedeemed(false);
     setRedeemError('');
+    setManualCode('');
+    setManualError('');
     pausedRef.current = false;
     setScanning(true);
     animRef.current = requestAnimationFrame(scanFrame);
+  };
+
+  const handleManualSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setManualError('');
+    const raw  = manualCode.trim().toUpperCase();
+    const code = extractCode(raw) ?? (/^[A-F0-9]{8}$/.test(raw) ? raw : null);
+    if (!code) { setManualError('Código inválido — debe tener 8 caracteres'); return; }
+    pausedRef.current = true;
+    setScanning(false);
+    setFetching(true);
+    try {
+      const data = await getCouponPublic(code);
+      setCoupon(data);
+    } catch {
+      setCoupon(null);
+      setManualError('Cupón no encontrado');
+      pausedRef.current = false;
+      setScanning(true);
+      animRef.current = requestAnimationFrame(scanFrame);
+    } finally {
+      setFetching(false);
+    }
   };
 
   const handleRedeem = async () => {
@@ -221,6 +248,30 @@ export default function ScannerPage() {
             </div>
           )}
         </div>
+
+        {/* ── Entrada manual ── */}
+        <form onSubmit={handleManualSearch} className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={manualCode}
+              onChange={e => { setManualCode(e.target.value); setManualError(''); }}
+              placeholder="Código manual (ej. A1B2C3D4)"
+              maxLength={80}
+              className="w-full pl-4 pr-4 py-2.5 rounded-xl text-white text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${manualError ? 'rgba(248,67,49,0.5)' : 'rgba(255,255,255,0.1)'}` }}
+            />
+            {manualError && (
+              <p className="absolute -bottom-5 left-1 text-red-400 text-xs">{manualError}</p>
+            )}
+          </div>
+          <button type="submit" disabled={!manualCode.trim() || fetching}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-40 flex-shrink-0"
+            style={{ background: '#F84331' }}>
+            <Search size={14} />
+            Buscar
+          </button>
+        </form>
 
         {/* ── Resultado ── */}
         {coupon && st && (

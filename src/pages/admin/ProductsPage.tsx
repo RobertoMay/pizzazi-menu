@@ -275,7 +275,8 @@ export default function ProductsPage() {
           {displayedProducts.map(product => (
             <div
               key={product._id}
-              className="rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 transition-all"
+              onClick={() => setModalProduct(product)}
+              className="rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 transition-all cursor-pointer hover:bg-white/[0.04] active:scale-[0.99]"
               style={{
                 background: 'linear-gradient(160deg, #1c1c2e 0%, #0e0e18 100%)',
                 border: '1px solid rgba(255,255,255,0.06)',
@@ -314,7 +315,7 @@ export default function ProductsPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
                 <button onClick={() => handleToggle(product._id)}
                   className="p-2 rounded-xl text-gray-400 hover:text-white transition-colors"
                   style={{ background: 'rgba(255,255,255,0.05)' }}
