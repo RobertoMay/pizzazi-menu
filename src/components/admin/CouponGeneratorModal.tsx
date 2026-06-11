@@ -81,12 +81,14 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
   };
 
   const handleCreateCustomer = async () => {
-    if (!newName.trim() || !newPhone.trim()) { setCustCreateErr('Nombre y teléfono son requeridos'); return; }
-    if (!branch) { setCustCreateErr('Selecciona una sucursal primero'); return; }
+    const digits = newPhone.trim().replace(/\D/g, '');
+    if (!newName.trim())        { setCustCreateErr('El nombre es requerido'); return; }
+    if (digits.length !== 10)   { setCustCreateErr('El teléfono debe tener exactamente 10 dígitos'); return; }
+    if (!branch)                { setCustCreateErr('Selecciona una sucursal primero'); return; }
     setSavingCust(true);
     setCustCreateErr('');
     try {
-      const created = await createCustomer({ name: newName.trim(), phone: newPhone.trim(), branch });
+      const created = await createCustomer({ name: newName.trim(), phone: digits, branch });
       setCustomer(created);
       setInlineCreate(false);
       setCustSearch('');
@@ -332,7 +334,7 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
                 </div>
               )}
               <div className={needsValue ? '' : 'col-span-2'}>
-                <label className="block text-xs text-gray-400 mb-1.5">Descripción (opcional)</label>
+                <label className="block text-xs text-gray-400 mb-1.5">Descripción</label>
                 <input type="text" value={description} onChange={e => setDescription(e.target.value)}
                   placeholder="Ej. en pizza grande" className={inp} style={inpStyle} />
               </div>

@@ -33,10 +33,12 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!name.trim() || !phone.trim()) { setError('Nombre y teléfono son requeridos'); return; }
+    const digits = phone.trim().replace(/\D/g, '');
+    if (!name.trim())          { setError('El nombre es requerido'); return; }
+    if (digits.length !== 10)  { setError('El teléfono debe tener exactamente 10 dígitos'); return; }
     setSaving(true);
     try {
-      const payload = { name, phone, notes, ...(isSuperAdmin ? { branch } : {}) };
+      const payload = { name: name.trim(), phone: digits, notes: notes.trim(), ...(isSuperAdmin ? { branch } : {}) };
       const saved = customer
         ? await updateCustomer(customer._id, payload)
         : await createCustomer(payload);
@@ -109,7 +111,7 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
               style={inputStyle}
               required
             />
-            <p className="text-gray-600 text-xs mt-1">10 dígitos sin espacios ni guiones</p>
+            <p className="text-gray-600 text-xs mt-1">10 dígitos, sin espacios ni guiones</p>
           </div>
 
           {/* Notas */}
@@ -118,7 +120,7 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="Alergias, preferencias, etc."
+              placeholder="Ej. cliente frecuente, prefiere pizza grande, etc."
               rows={2}
               className={inputCls}
               style={{ ...inputStyle, resize: 'none' }}
