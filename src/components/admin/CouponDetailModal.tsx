@@ -5,7 +5,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { cancelCoupon } from '../../services/api';
 import ConfirmModal from './ConfirmModal';
-import { openWhatsApp, shareImage, buildWaMessage } from '../../utils/couponShare';
+import { buildWaLink, shareImage, buildWaMessage } from '../../utils/couponShare';
 import { printCoupon } from '../../utils/printCoupon';
 
 const LOGO  = '/images/logo.png';
@@ -65,9 +65,7 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
 
   const waMsg = buildWaMessage(coupon.customer?.name, discountText, validUntilStr, couponUrl);
 
-  const handleWhatsApp = () => {
-    openWhatsApp(coupon.customer?.phone ?? '', waMsg);
-  };
+  const waLink = buildWaLink(coupon.customer?.phone ?? '', waMsg);
 
   const handleShare = async () => {
     setSharing(true);
@@ -174,11 +172,11 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
           <div className="px-5 pb-5 pt-3 space-y-2 flex-shrink-0"
             style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
 
-            <button onClick={handleWhatsApp}
+            <a href={waLink} target="_blank" rel="noopener noreferrer"
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
               style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)' }}>
               <FaWhatsapp size={16} /> Enviar por WhatsApp
-            </button>
+            </a>
 
             <div className="grid grid-cols-2 gap-2">
               <button onClick={handleShare} disabled={sharing}
