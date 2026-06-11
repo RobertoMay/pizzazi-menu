@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { cancelCoupon } from '../../services/api';
 import ConfirmModal from './ConfirmModal';
 import { openWhatsApp, shareImage, buildWaMessage } from '../../utils/couponShare';
+import { printCoupon } from '../../utils/printCoupon';
 
 const LOGO  = '/images/logo.png';
 const QR_ID = 'detail-qr';
@@ -78,50 +79,11 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
   };
 
   const handlePrint = () => {
-    const qrEl     = document.getElementById('detail-qr') as HTMLCanvasElement;
-    const qrData   = qrEl?.toDataURL('image/png') ?? '';
-    const applyStr = coupon.applyTo?.length
-      ? coupon.applyTo.map(a => APPLY_LABEL[a]).join(', ')
-      : 'Todos los pedidos';
-
-    const pw = window.open('', '_blank', 'width=600,height=800');
-    if (!pw) return;
-    pw.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-      <title>Cupón ${coupon.code}</title>
-      <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{width:80mm;font-family:'Courier New',monospace;font-size:11px;padding:4mm;text-align:center}
-        h1{font-size:20px;letter-spacing:4px;margin-bottom:2px}
-        .sub{font-size:9px;margin-bottom:6px;color:#555}
-        hr{border:none;border-top:1px dashed #000;margin:5px 0}
-        .tag{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:2px}
-        .big{font-size:18px;font-weight:bold;margin:3px 0}
-        .info{font-size:10px;margin:2px 0}
-        .qr{width:140px;height:140px;margin:6px auto;display:block}
-        .url{font-size:7px;color:#444;word-break:break-all;margin-top:2px}
-        .code{font-size:9px;margin-top:4px;letter-spacing:2px}
-        @media print{@page{size:80mm auto;margin:0}body{width:80mm}}
-      </style></head><body>
-      <h1>PIZZAZI</h1>
-      ${coupon.branch?.name ? `<p class="sub">${coupon.branch.name}</p>` : ''}
-      <hr>
-      <p class="tag">Cupón de descuento</p>
-      <p class="big">${discountText}</p>
-      ${coupon.description ? `<p class="info">${coupon.description}</p>` : ''}
-      <hr>
-      <p class="info">Para: <strong>${coupon.customer?.name}</strong></p>
-      <p class="info">Válido hasta: ${validUntilStr}</p>
-      <p class="info">Aplica: ${applyStr}</p>
-      <p class="info">Usos: ${coupon.maxUses === null ? 'Ilimitado' : coupon.maxUses}</p>
-      <hr>
-      <img src="${qrData}" class="qr" />
-      <p class="url">${couponUrl}</p>
-      <p class="code">Cód: ${coupon.code}</p>
-      <hr>
-      <p style="font-size:8px;margin-top:2px">Escanea el QR para validar</p>
-      <script>window.onload=function(){window.print();setTimeout(()=>window.close(),500)}<\/script>
-    </body></html>`);
-    pw.document.close();
+    printCoupon({
+      qrCanvasId: QR_ID, code: coupon.code, discountText,
+      customerName: coupon.customer?.name, validUntilStr, couponUrl,
+      applyTo: coupon.applyTo, maxUses: coupon.maxUses, branchName: coupon.branch?.name,
+    });
   };
 
   const handleCancel = async () => {
