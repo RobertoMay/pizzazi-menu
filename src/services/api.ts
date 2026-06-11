@@ -2,7 +2,10 @@ const API = import.meta.env.VITE_API_URL as string;
 
 const fetchJSON = async (url: string, options?: RequestInit) => {
   const res = await fetch(url, options);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `HTTP ${res.status}`);
+  }
   return res.json();
 };
 

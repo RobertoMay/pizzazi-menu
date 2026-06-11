@@ -171,8 +171,8 @@ export default function ScannerPage() {
       } else {
         setRedeemError(res.message || 'No se pudo canjear');
       }
-    } catch {
-      setRedeemError('Error de red. Intenta de nuevo.');
+    } catch (e) {
+      setRedeemError(e instanceof Error ? e.message : 'Error de red. Intenta de nuevo.');
     } finally {
       setRedeeming(false);
     }
