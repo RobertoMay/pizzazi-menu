@@ -21,15 +21,20 @@ self.addEventListener('notificationclick', event => {
   const fullUrl = self.location.origin + path;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async list => {
-      // Si la app ya está abierta: navega y enfoca esa ventana
+      // Busca una ventana ya abierta de la app
       for (const c of list) {
-        if (c.url.startsWith(self.location.origin) && 'focus' in c) {
-          const win = await c.focus();
-          if (win.navigate) win.navigate(fullUrl);
-          return;
+        if (c.url.startsWith(self.location.origin)) {
+          try {
+            const win = await c.focus();
+            if (win) {
+              // navigate() puede fallar si la URL está fuera de scope; ignorar error
+              try { await win.navigate(fullUrl); } catch {}
+              return;
+            }
+          } catch {}
         }
       }
-      // Si no está abierta: abre una ventana nueva con la URL completa
+      // App cerrada o focus falló — openWindow abre la PWA instalada
       return clients.openWindow(fullUrl);
     })
   );
