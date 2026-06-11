@@ -101,7 +101,7 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
         style={{ background: 'rgba(0,0,0,0.8)' }}>
-        <div className="w-full max-w-sm rounded-2xl overflow-hidden flex flex-col max-h-[90dvh]"
+        <div className="w-full max-w-sm sm:max-w-2xl rounded-2xl overflow-hidden flex flex-col max-h-[90dvh]"
           style={{ background: '#13131f', border: '1px solid rgba(255,255,255,0.08)' }}>
 
           {/* Header */}
@@ -117,91 +117,123 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
             </button>
           </div>
 
-          <div className="overflow-y-auto flex-1 px-5 py-5 space-y-4">
+          {/* Body — single column on mobile, two columns on desktop */}
+          <div className="overflow-y-auto flex-1 p-5">
+            <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-[auto_1fr] sm:gap-4">
 
-            {/* QR Card */}
-            <div className="rounded-2xl p-5 flex flex-col items-center gap-3" style={{ background: '#ffffff' }}>
-              <div className="flex items-center gap-2">
-                <img src={LOGO} alt="Pizzazi" className="w-7 h-7 object-contain" />
-                <span className="font-black tracking-widest text-gray-900 text-sm">PIZZAZI</span>
+              {/* QR Card */}
+              <div className="rounded-2xl p-5 flex flex-col items-center gap-3" style={{ background: '#ffffff' }}>
+                <div className="flex items-center gap-2">
+                  <img src={LOGO} alt="Pizzazi" className="w-7 h-7 object-contain" />
+                  <span className="font-black tracking-widest text-gray-900 text-sm">PIZZAZI</span>
+                </div>
+                <p className="text-red-500 text-xs font-bold tracking-wider uppercase">Cupón de descuento</p>
+                <p className="text-gray-900 font-black text-xl text-center leading-tight">{discountText}</p>
+                <p className="text-gray-600 text-xs">Para: <strong>{coupon.customer?.name}</strong></p>
+
+                <div className="p-2.5 rounded-xl" style={{ background: '#f3f4f6' }}>
+                  <QRCodeCanvas
+                    id="detail-qr"
+                    value={couponUrl}
+                    size={180}
+                    level="H"
+                    imageSettings={{
+                      src: `${window.location.origin}${LOGO}`,
+                      height: 36, width: 36, excavate: true,
+                    }}
+                    style={{ display: 'block', borderRadius: 6 }}
+                  />
+                </div>
+
+                <p className="text-gray-500 text-xs">Válido hasta: {validUntilStr}</p>
+                <p className="text-gray-400 text-xs font-mono break-all text-center px-1">{couponUrl}</p>
+                <p className="text-gray-400 text-xs font-mono">Código: {coupon.code}</p>
               </div>
-              <p className="text-red-500 text-xs font-bold tracking-wider uppercase">Cupón de descuento</p>
-              <p className="text-gray-900 font-black text-xl text-center leading-tight">{discountText}</p>
-              <p className="text-gray-600 text-xs">Para: <strong>{coupon.customer?.name}</strong></p>
 
-              <div className="p-2.5 rounded-xl" style={{ background: '#f3f4f6' }}>
-                <QRCodeCanvas
-                  id="detail-qr"
-                  value={couponUrl}
-                  size={180}
-                  level="H"
-                  imageSettings={{
-                    src: `${window.location.origin}${LOGO}`,
-                    height: 36, width: 36, excavate: true,
-                  }}
-                  style={{ display: 'block', borderRadius: 6 }}
-                />
+              {/* Right column: info + desktop actions */}
+              <div className="flex flex-col gap-3">
+                {/* Info */}
+                <div className="rounded-xl px-4 py-3 space-y-2"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <Row label="Cliente"    value={coupon.customer?.name} bold />
+                  <Row label="Teléfono"  value={coupon.customer?.phone} />
+                  <Row label="Usos"      value={`${coupon.usedCount} / ${coupon.maxUses === null ? '∞' : coupon.maxUses}`} />
+                  {coupon.createdBy?.name && (
+                    <Row label="Generado por" value={coupon.createdBy.name} />
+                  )}
+                  <Row label="Fecha" value={new Date(coupon.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
+                  {coupon.applyTo?.length > 0 && (
+                    <Row label="Aplica" value={coupon.applyTo.map(a => APPLY_LABEL[a]).join(', ')} />
+                  )}
+                  {coupon.branch?.name && (
+                    <Row label="Sucursal" value={coupon.branch.name} />
+                  )}
+                </div>
+
+                {/* Actions — desktop only */}
+                <div className="hidden sm:flex flex-col gap-2">
+                  <a href={waLink} target="_blank" rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
+                    style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)' }}>
+                    <FaWhatsapp size={16} /> Enviar por WhatsApp
+                  </a>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={handleShare} disabled={sharing}
+                      className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
+                      style={{ background: 'rgba(255,255,255,0.08)' }}>
+                      <Share2 size={15} /> {sharing ? 'Generando...' : 'Compartir imagen'}
+                    </button>
+                    <button onClick={handlePrint}
+                      className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
+                      style={{ background: 'rgba(255,255,255,0.08)' }}>
+                      <Printer size={15} /> Imprimir
+                    </button>
+                  </div>
+                  {coupon.status === 'active' && (
+                    <button onClick={() => setShowConfirmCancel(true)}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
+                      style={{ background: 'rgba(248,67,49,0.1)', border: '1px solid rgba(248,67,49,0.25)', color: '#f87171' }}>
+                      <XCircle size={15} /> Cancelar cupón
+                    </button>
+                  )}
+                  <button onClick={onClose}
+                    className="w-full py-2.5 rounded-xl text-gray-400 text-sm font-semibold"
+                    style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    Cerrar
+                  </button>
+                </div>
               </div>
 
-              <p className="text-gray-500 text-xs">Válido hasta: {validUntilStr}</p>
-              <p className="text-gray-400 text-xs font-mono break-all text-center px-1">{couponUrl}</p>
-              <p className="text-gray-400 text-xs font-mono">Código: {coupon.code}</p>
             </div>
-
-            {/* Info */}
-            <div className="rounded-xl px-4 py-3 space-y-2"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <Row label="Cliente"    value={coupon.customer?.name} bold />
-              <Row label="Teléfono"  value={coupon.customer?.phone} />
-              <Row label="Usos"      value={`${coupon.usedCount} / ${coupon.maxUses === null ? '∞' : coupon.maxUses}`} />
-              {coupon.createdBy?.name && (
-                <Row label="Generado por" value={coupon.createdBy.name} />
-              )}
-              <Row label="Fecha" value={new Date(coupon.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
-              {coupon.applyTo?.length > 0 && (
-                <Row label="Aplica" value={coupon.applyTo.map(a => APPLY_LABEL[a]).join(', ')} />
-              )}
-              {coupon.branch?.name && (
-                <Row label="Sucursal" value={coupon.branch.name} />
-              )}
-            </div>
-
           </div>
 
-          {/* Actions */}
-          <div className="px-5 pb-5 pt-3 space-y-2 flex-shrink-0"
+          {/* Footer: actions — mobile only */}
+          <div className="sm:hidden px-5 pb-5 pt-3 space-y-2 flex-shrink-0"
             style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-
             <a href={waLink} target="_blank" rel="noopener noreferrer"
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
               style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)' }}>
               <FaWhatsapp size={16} /> Enviar por WhatsApp
             </a>
-
             <div className="grid grid-cols-2 gap-2">
               <button onClick={handleShare} disabled={sharing}
                 className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
                 style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <Share2 size={15} />
-                {sharing ? 'Generando...' : 'Compartir imagen'}
+                <Share2 size={15} /> {sharing ? 'Generando...' : 'Compartir imagen'}
               </button>
               <button onClick={handlePrint}
                 className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
                 style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <Printer size={15} />
-                Imprimir
+                <Printer size={15} /> Imprimir
               </button>
             </div>
-
             {coupon.status === 'active' && (
               <button onClick={() => setShowConfirmCancel(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-opacity"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
                 style={{ background: 'rgba(248,67,49,0.1)', border: '1px solid rgba(248,67,49,0.25)', color: '#f87171' }}>
-                <XCircle size={15} />
-                Cancelar cupón
+                <XCircle size={15} /> Cancelar cupón
               </button>
             )}
-
             <button onClick={onClose}
               className="w-full py-2.5 rounded-xl text-gray-400 text-sm font-semibold"
               style={{ background: 'rgba(255,255,255,0.05)' }}>
