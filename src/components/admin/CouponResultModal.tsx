@@ -97,12 +97,11 @@ export default function CouponResultModal({ coupon, couponUrl, onClose }: Props)
 
             {/* Right column: info + desktop actions */}
             <div className="hidden sm:flex flex-col gap-2 justify-center">
-              <p className="text-gray-400 text-xs mb-1">
-                <span className="text-gray-500">Cliente:</span> <strong className="text-white">{coupon.customer?.name}</strong>
-              </p>
-              <p className="text-gray-400 text-xs mb-3">
-                <span className="text-gray-500">Sucursal:</span> {coupon.branch?.name ?? '—'}
-              </p>
+              <div className="rounded-xl px-4 py-3 mb-1 space-y-2"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-base font-bold text-white">{coupon.customer?.name}</p>
+                <p className="text-sm text-gray-400">{coupon.branch?.name ?? '—'}</p>
+              </div>
               <a href={waLink} target="_blank" rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
                 style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)' }}>
