@@ -1,17 +1,18 @@
+const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 export const buildWaLink = (phone: string, message: string) => {
   const digits  = phone.replace(/\D/g, '');
   const waPhone = digits.length === 10 ? `521${digits}` : digits;
-  return `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
+  const encoded = encodeURIComponent(message);
+  // wa.me abre la app directamente en móvil; en desktop pasa por una landing page
+  // que rompe los emojis — web.whatsapp.com/send va directo a WhatsApp Web
+  return isMobile()
+    ? `https://wa.me/${waPhone}?text=${encoded}`
+    : `https://web.whatsapp.com/send?phone=${waPhone}&text=${encoded}`;
 };
 
 export const openWhatsApp = (phone: string, message: string) => {
-  const a = document.createElement('a');
-  a.href = buildWaLink(phone, message);
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  window.open(buildWaLink(phone, message), '_blank');
 };
 
 const downloadBlob = (blob: Blob, filename: string) => {
