@@ -122,13 +122,12 @@ export default function CouponPublicPage() {
           <span className="text-white font-black tracking-widest text-xl">PIZZAZI</span>
         </div>
 
-        {/* Status — ✓ palomita o ✗ tache */}
-        <div className="rounded-2xl px-5 py-4 flex flex-col items-center gap-2" style={{ background: st.bg }}>
+        {/* Status — solo ícono */}
+        <div className="rounded-2xl px-5 py-4 flex items-center justify-center" style={{ background: st.bg }}>
           {st.valid
-            ? <CheckCircle size={40} color={st.color} strokeWidth={2.5} />
-            : <XCircle    size={40} color={st.color} strokeWidth={2.5} />
+            ? <CheckCircle size={44} color={st.color} strokeWidth={2.5} />
+            : <XCircle    size={44} color={st.color} strokeWidth={2.5} />
           }
-          <p className="font-black text-lg tracking-widest" style={{ color: st.color }}>{st.label}</p>
         </div>
 
         {/* Coupon info */}
