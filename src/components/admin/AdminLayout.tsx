@@ -21,16 +21,22 @@ const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches ||
   ('standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true);
 
+const isIOSSafari = () => {
+  const ua = navigator.userAgent;
+  return /iPhone|iPad|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+};
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
   const navRef    = useRef<HTMLDivElement>(null);
 
-  const [installPrompt,  setInstallPrompt]  = useState<BeforeInstallPromptEvent | null>(null);
+  const [installPrompt,   setInstallPrompt]   = useState<BeforeInstallPromptEvent | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(() =>
     localStorage.getItem('installBannerDismissed') === '1'
   );
+  const [iosHint] = useState(() => !isStandalone() && isIOSSafari());
 
   // Captura el evento solo en Android/Chrome — en iOS nunca se dispara
   useEffect(() => {
@@ -124,7 +130,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* Banner de instalación — solo Android cuando el evento está disponible */}
+        {/* Banner instalación — Chromium (Android, Windows, Brave…) */}
         {showBanner && (
           <div className="max-w-7xl mx-auto px-4 pb-3">
             <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl"
@@ -133,13 +139,27 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <p className="flex-1 text-sm text-gray-300 leading-tight">
                 Instala la app para acceso rápido desde tu pantalla de inicio
               </p>
-              <button
-                onClick={handleInstall}
+              <button onClick={handleInstall}
                 className="px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0"
-                style={{ background: '#F84331', color: '#fff' }}
-              >
+                style={{ background: '#F84331', color: '#fff' }}>
                 Instalar
               </button>
+              <button onClick={handleDismiss} className="text-gray-500 hover:text-white transition-colors flex-shrink-0">
+                <X size={15} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Hint instalación — Safari iOS (sin API, instrucción manual) */}
+        {iosHint && !bannerDismissed && (
+          <div className="max-w-7xl mx-auto px-4 pb-3">
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl"
+              style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)' }}>
+              <Download size={15} className="text-blue-400 flex-shrink-0" />
+              <p className="flex-1 text-sm text-gray-300 leading-tight">
+                Para instalar: toca <span className="text-white font-semibold">Compartir ↑</span> → <span className="text-white font-semibold">Añadir a pantalla de inicio</span>
+              </p>
               <button onClick={handleDismiss} className="text-gray-500 hover:text-white transition-colors flex-shrink-0">
                 <X size={15} />
               </button>
