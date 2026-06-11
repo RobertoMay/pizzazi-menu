@@ -106,7 +106,7 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
       try {
         const params: Record<string,string> = { q: custSearch };
         if (isSuperAdmin && branch) params.branch = branch;
-        setCustResults(await getCustomers(params));
+        setCustResults((await getCustomers(params)).customers as any[]);
       } finally { setCustLoading(false); }
     }, 300);
   }, [custSearch, branch, isSuperAdmin]);

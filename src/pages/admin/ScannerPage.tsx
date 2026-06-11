@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import jsQR from 'jsqr';
-import { RotateCcw, CameraOff, CheckCircle, Search } from 'react-feather';
+import { RotateCcw, CameraOff, CheckCircle, Search, AlertTriangle } from 'react-feather';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { getCouponPublic, redeemCouponPublic } from '../../services/api';
+import { getCouponPublic, redeemCouponPublic, getPromotions } from '../../services/api';
 
 interface CouponData {
   _id: string; code: string;
@@ -50,6 +50,7 @@ export default function ScannerPage() {
   const pausedRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const [todayPromos, setTodayPromos] = useState<string[]>([]);
   const [camError,    setCamError]    = useState('');
   const [scanning,    setScanning]    = useState(true);
   const [coupon,      setCoupon]      = useState<CouponData | null>(null);
@@ -123,6 +124,23 @@ export default function ScannerPage() {
     return stopCamera;
   }, [startCamera, stopCamera]);
 
+  // Detecta promociones activas hoy para mostrar advertencia al cajero
+  useEffect(() => {
+    const today = new Date().getDay(); // 0=Dom, 1=Lun, ... 6=Sáb
+    getPromotions({ active: 'true' })
+      .then((promos: any[]) => {
+        const now = new Date();
+        const active = promos.filter(p =>
+          p.active &&
+          (p.days.length === 0 || p.days.includes(today)) &&
+          (!p.startDate || new Date(p.startDate) <= now) &&
+          (!p.endDate   || new Date(p.endDate)   >= now)
+        );
+        setTodayPromos(active.map((p: any) => p.title));
+      })
+      .catch(() => {});
+  }, []);
+
   const handleReset = () => {
     setCoupon(null);
     setRedeemed(false);
@@ -184,6 +202,21 @@ export default function ScannerPage() {
     <AdminLayout>
       <div className="max-w-lg mx-auto space-y-4">
         <h1 className="text-white text-2xl font-bold">Escáner de Cupones</h1>
+
+        {/* Alerta de promoción activa hoy */}
+        {todayPromos.length > 0 && (
+          <div className="flex items-start gap-3 px-4 py-3 rounded-2xl"
+            style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)' }}>
+            <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" color="#fbbf24" />
+            <div>
+              <p className="text-yellow-400 text-sm font-semibold">
+                ¡Hoy {todayPromos.length === 1 ? 'hay una promoción activa' : `hay ${todayPromos.length} promociones activas`}!
+              </p>
+              <p className="text-yellow-500/80 text-xs mt-0.5">{todayPromos.join(' · ')}</p>
+              <p className="text-yellow-600/70 text-xs mt-1">El cliente puede preferir usar la promoción en lugar del cupón.</p>
+            </div>
+          </div>
+        )}
 
         {/* ── Viewfinder ── */}
         <div className="relative rounded-2xl overflow-hidden bg-black"

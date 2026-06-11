@@ -179,7 +179,9 @@ export const toggleUser = (id: string) =>
 
 // ── Customers ──────────────────────────────────────────────────────
 export const getCustomers = (params: Record<string, string> = {}) =>
-  authFetch(`${API}/customers?${new URLSearchParams(params)}`);
+  authFetch(`${API}/customers?${new URLSearchParams(params)}`) as Promise<{
+    customers: unknown[]; total: number; page: number; pages: number;
+  }>;
 
 export const createCustomer = (data: object) =>
   authFetch(`${API}/customers`, { method: 'POST', body: JSON.stringify(data) });

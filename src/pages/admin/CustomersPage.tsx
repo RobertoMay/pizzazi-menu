@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, UserPlus, Edit2, Trash2, Tag } from 'react-feather';
+import { Search, UserPlus, Edit2, Trash2, Tag, ChevronLeft, ChevronRight } from 'react-feather';
 import AdminLayout from '../../components/admin/AdminLayout';
 import CustomerModal from '../../components/admin/CustomerModal';
 import ConfirmModal from '../../components/admin/ConfirmModal';
@@ -21,32 +21,40 @@ export default function CustomersPage() {
   const { user } = useAuth();
   const navigate  = useNavigate();
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [query,     setQuery]     = useState('');
-  const [modal,     setModal]     = useState<'create' | 'edit' | null>(null);
-  const [editing,   setEditing]   = useState<Customer | null>(null);
-  const [toDelete,  setToDelete]  = useState<Customer | null>(null);
+  const [customers,  setCustomers]  = useState<Customer[]>([]);
+  const [loading,    setLoading]    = useState(true);
+  const [query,      setQuery]      = useState('');
+  const [page,       setPage]       = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total,      setTotal]      = useState(0);
+  const [modal,      setModal]      = useState<'create' | 'edit' | null>(null);
+  const [editing,    setEditing]    = useState<Customer | null>(null);
+  const [toDelete,   setToDelete]   = useState<Customer | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Record<string, string> = {};
+      const params: Record<string, string> = { page: String(page) };
       if (query.trim()) params.q = query.trim();
       const data = await getCustomers(params);
-      setCustomers(data);
+      setCustomers(data.customers as Customer[]);
+      setTotalPages(data.pages);
+      setTotal(data.total);
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [query, page]);
 
   useEffect(() => { load(); }, [load]);
 
-  // Debounce de búsqueda
+  // Reset a página 1 al cambiar búsqueda
+  useEffect(() => { setPage(1); }, [query]);
+
+  // Debounce búsqueda
   useEffect(() => {
-    const t = setTimeout(load, 300);
+    const t = setTimeout(() => { if (page === 1) load(); }, 300);
     return () => clearTimeout(t);
-  }, [query, load]);
+  }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSaved = (saved: Customer) => {
     setCustomers(prev => {
@@ -163,6 +171,31 @@ export default function CustomersPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Paginación */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-gray-500 text-xs">{total} clientes · página {page} de {totalPages}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(p => p - 1)}
+                disabled={page === 1 || loading}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold disabled:opacity-30 transition-opacity"
+                style={{ background: 'rgba(255,255,255,0.06)', color: '#9ca3af' }}
+              >
+                <ChevronLeft size={15} /> Anterior
+              </button>
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={page === totalPages || loading}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold disabled:opacity-30 transition-opacity"
+                style={{ background: 'rgba(255,255,255,0.06)', color: '#9ca3af' }}
+              >
+                Siguiente <ChevronRight size={15} />
+              </button>
+            </div>
           </div>
         )}
       </div>
