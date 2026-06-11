@@ -177,18 +177,16 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
                     style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)' }}>
                     <FaWhatsapp size={16} /> Enviar por WhatsApp
                   </a>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button onClick={handleShare} disabled={sharing}
-                      className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
-                      style={{ background: 'rgba(255,255,255,0.08)' }}>
-                      <Share2 size={15} /> {sharing ? 'Generando...' : 'Compartir imagen'}
-                    </button>
-                    <button onClick={handlePrint}
-                      className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
-                      style={{ background: 'rgba(255,255,255,0.08)' }}>
-                      <Printer size={15} /> Imprimir
-                    </button>
-                  </div>
+                  <button onClick={handleShare} disabled={sharing}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
+                    style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <Share2 size={15} /> {sharing ? 'Generando...' : 'Compartir imagen'}
+                  </button>
+                  <button onClick={handlePrint}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
+                    style={{ background: 'rgba(255,255,255,0.08)' }}>
+                    <Printer size={15} /> Imprimir
+                  </button>
                   {coupon.status === 'active' && (
                     <button onClick={() => setShowConfirmCancel(true)}
                       className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
@@ -256,9 +254,9 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
 
 function Row({ label, value, bold }: { label: string; value?: string; bold?: boolean }) {
   return (
-    <div className="flex justify-between items-center gap-2">
-      <span className="text-gray-500 text-xs flex-shrink-0">{label}</span>
-      <span className={`text-xs text-right ${bold ? 'text-white font-semibold' : 'text-gray-300'}`}>{value}</span>
+    <div className="flex justify-between items-start gap-3">
+      <span className="text-gray-500 text-xs flex-shrink-0 pt-px">{label}</span>
+      <span className={`text-xs text-right leading-relaxed ${bold ? 'text-white font-semibold' : 'text-gray-300'}`}>{value}</span>
     </div>
   );
 }
