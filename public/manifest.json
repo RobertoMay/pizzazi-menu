@@ -2,7 +2,7 @@
   "name": "Pizzazi Admin",
   "short_name": "Pizzazi",
   "description": "Panel de administración Pizzazi",
-  "start_url": "/admin/products",
+  "start_url": "/admin/dashboard",
   "display": "standalone",
   "background_color": "#060612",
   "theme_color": "#F84331",
