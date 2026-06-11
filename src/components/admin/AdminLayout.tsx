@@ -1,7 +1,8 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, Download, X } from 'react-feather';
+import { LogOut } from 'react-feather';
 import { useAuth } from '../../contexts/AuthContext';
+import InstallBanner from './InstallBanner';
 
 const NAV = [
   { label: '🍕 Productos',   path: '/admin/products',   roles: ['superadmin', 'admin', 'editor'] },
@@ -14,65 +15,23 @@ const NAV = [
   { label: '📷 Escáner',    path: '/admin/scanner',    roles: ['superadmin', 'admin', 'editor'] },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type BeforeInstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
-
-const isStandalone = () =>
-  window.matchMedia('(display-mode: standalone)').matches ||
-  ('standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true);
-
-const isIOSSafari = () => {
-  const ua = navigator.userAgent;
-  return /iPhone|iPad|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
-};
-
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
   const navRef    = useRef<HTMLDivElement>(null);
 
-  const [installPrompt,   setInstallPrompt]   = useState<BeforeInstallPromptEvent | null>(null);
-  const [bannerDismissed, setBannerDismissed] = useState(() =>
-    localStorage.getItem('installBannerDismissed') === '1'
-  );
-  const [iosHint] = useState(() => !isStandalone() && isIOSSafari());
-
-  // Captura el evento solo en Android/Chrome — en iOS nunca se dispara
-  useEffect(() => {
-    if (isStandalone()) return; // ya está instalada
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setInstallPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
   useEffect(() => {
     const el = navRef.current?.querySelector<HTMLElement>('[data-active="true"]');
     el?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'instant' });
   }, [location.pathname]);
-
-  const handleInstall = async () => {
-    if (!installPrompt) return;
-    await installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') setInstallPrompt(null);
-  };
-
-  const handleDismiss = () => {
-    setBannerDismissed(true);
-    localStorage.setItem('installBannerDismissed', '1');
-  };
 
   const handleLogout = async () => {
     await logout();
     navigate('/admin');
   };
 
-  const visibleNav   = NAV.filter(n => user && n.roles.includes(user.role));
-  const showBanner   = !!installPrompt && !bannerDismissed;
+  const visibleNav = NAV.filter(n => user && n.roles.includes(user.role));
 
   return (
     <div className="menu-bg min-h-screen">
@@ -130,42 +89,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* Banner instalación — Chromium (Android, Windows, Brave…) */}
-        {showBanner && (
-          <div className="max-w-7xl mx-auto px-4 pb-3">
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl"
-              style={{ background: 'rgba(248,67,49,0.12)', border: '1px solid rgba(248,67,49,0.25)' }}>
-              <Download size={15} className="text-red-400 flex-shrink-0" />
-              <p className="flex-1 text-sm text-gray-300 leading-tight">
-                Instala la app para acceso rápido desde tu pantalla de inicio
-              </p>
-              <button onClick={handleInstall}
-                className="px-3 py-1 rounded-lg text-xs font-bold flex-shrink-0"
-                style={{ background: '#F84331', color: '#fff' }}>
-                Instalar
-              </button>
-              <button onClick={handleDismiss} className="text-gray-500 hover:text-white transition-colors flex-shrink-0">
-                <X size={15} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Hint instalación — Safari iOS (sin API, instrucción manual) */}
-        {iosHint && !bannerDismissed && (
-          <div className="max-w-7xl mx-auto px-4 pb-3">
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl"
-              style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)' }}>
-              <Download size={15} className="text-blue-400 flex-shrink-0" />
-              <p className="flex-1 text-sm text-gray-300 leading-tight">
-                Para instalar: toca <span className="text-white font-semibold">Compartir ↑</span> → <span className="text-white font-semibold">Añadir a pantalla de inicio</span>
-              </p>
-              <button onClick={handleDismiss} className="text-gray-500 hover:text-white transition-colors flex-shrink-0">
-                <X size={15} />
-              </button>
-            </div>
-          </div>
-        )}
+        <div className="max-w-7xl mx-auto px-4 pb-3">
+          <InstallBanner />
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
