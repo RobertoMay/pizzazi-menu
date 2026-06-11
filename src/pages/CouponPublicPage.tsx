@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
+import { Maximize2, CheckCircle, XCircle } from 'react-feather';
 import { getCouponPublic } from '../services/api';
 
 const LOGO = '/images/logo.png';
@@ -21,10 +22,10 @@ const DISCOUNT_TEXT = (type: string, value?: number, description?: string) => {
 };
 
 const STATUS_CONFIG = {
-  active:    { label: 'VÁLIDO',    bg: '#16a34a', color: '#fff' },
-  used:      { label: 'UTILIZADO', bg: '#374151', color: '#9ca3af' },
-  expired:   { label: 'VENCIDO',   bg: '#7f1d1d', color: '#fca5a5' },
-  cancelled: { label: 'CANCELADO', bg: '#7f1d1d', color: '#fca5a5' },
+  active:    { label: 'VÁLIDO',    bg: '#166534', color: '#86efac', valid: true  },
+  used:      { label: 'UTILIZADO', bg: '#374151', color: '#9ca3af', valid: false },
+  expired:   { label: 'VENCIDO',   bg: '#7f1d1d', color: '#fca5a5', valid: false },
+  cancelled: { label: 'CANCELADO', bg: '#7f1d1d', color: '#fca5a5', valid: false },
 } as const;
 
 interface CouponData {
@@ -42,9 +43,9 @@ export default function CouponPublicPage() {
   const { code }     = useParams<{ code: string }>();
   const couponUrl    = window.location.href;
 
-  const [coupon,   setCoupon]   = useState<CouponData | null>(null);
-  const [loading,  setLoading]  = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const [coupon,     setCoupon]     = useState<CouponData | null>(null);
+  const [loading,    setLoading]    = useState(true);
+  const [notFound,   setNotFound]   = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function CouponPublicPage() {
         style={{ background: '#ffffff' }}
         onClick={() => setFullscreen(false)}
       >
-        <p className="text-gray-500 text-xs font-semibold tracking-widest uppercase">Toca para salir</p>
+        <p className="text-gray-500 text-sm font-semibold tracking-widest uppercase">Toca para salir</p>
         <QRCodeCanvas
           value={couponUrl}
           size={Math.min(window.innerWidth * 0.82, 320)}
@@ -101,10 +102,10 @@ export default function CouponPublicPage() {
           style={{ display: 'block', borderRadius: 12 }}
         />
         <div className="text-center px-6">
-          <p className="text-gray-800 font-black text-xl leading-tight">{discountText}</p>
-          <p className="text-gray-500 text-sm mt-1">Para: <strong>{coupon.customer?.name}</strong></p>
+          <p className="text-gray-800 font-black text-2xl leading-tight">{discountText}</p>
+          <p className="text-gray-500 text-base mt-1">Para: <strong>{coupon.customer?.name}</strong></p>
         </div>
-        <p className="text-gray-400 text-xs text-center px-8">
+        <p className="text-gray-400 text-sm text-center px-8">
           Muestra este código al cajero para canjear tu descuento
         </p>
       </div>
@@ -117,28 +118,32 @@ export default function CouponPublicPage() {
 
         {/* Branding */}
         <div className="flex items-center justify-center gap-2.5 mb-2">
-          <img src={LOGO} alt="Pizzazi" className="w-9 h-9 object-contain" />
-          <span className="text-white font-black tracking-widest text-lg">PIZZAZI</span>
+          <img src={LOGO} alt="Pizzazi" className="w-10 h-10 object-contain" />
+          <span className="text-white font-black tracking-widest text-xl">PIZZAZI</span>
         </div>
 
-        {/* Status */}
-        <div className="rounded-2xl px-5 py-3 text-center" style={{ background: st.bg }}>
-          <p className="font-black text-xl tracking-widest" style={{ color: st.color }}>{st.label}</p>
+        {/* Status — ✓ palomita o ✗ tache */}
+        <div className="rounded-2xl px-5 py-4 flex flex-col items-center gap-2" style={{ background: st.bg }}>
+          {st.valid
+            ? <CheckCircle size={40} color={st.color} strokeWidth={2.5} />
+            : <XCircle    size={40} color={st.color} strokeWidth={2.5} />
+          }
+          <p className="font-black text-lg tracking-widest" style={{ color: st.color }}>{st.label}</p>
         </div>
 
         {/* Coupon info */}
-        <div className="rounded-2xl px-5 py-5 space-y-3"
+        <div className="rounded-2xl px-5 py-5 space-y-4"
           style={{ background: 'linear-gradient(160deg,#1c1c2e,#0e0e18)', border: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="text-center">
-            <p className="text-red-400 text-xs font-bold uppercase tracking-wider mb-1">Cupón de descuento</p>
-            <p className="text-white font-black text-2xl leading-tight">{discountText}</p>
-            <p className="text-gray-400 text-sm mt-1.5">
+            <p className="text-red-400 text-sm font-bold uppercase tracking-wider mb-1">Cupón de descuento</p>
+            <p className="text-white font-black text-3xl leading-tight">{discountText}</p>
+            <p className="text-gray-400 text-base mt-2">
               Para: <span className="text-gray-200 font-semibold">{coupon.customer?.name}</span>
             </p>
-            <p className="text-gray-600 text-xs mt-0.5">{coupon.branch?.name}</p>
+            <p className="text-gray-500 text-sm mt-0.5">{coupon.branch?.name}</p>
           </div>
 
-          <div className="text-xs text-gray-500 space-y-1">
+          <div className="text-sm text-gray-500 space-y-1.5">
             {coupon.applyTo?.length > 0 && (
               <p className="text-center">{coupon.applyTo.map(a => APPLY_LABEL[a]).join(' · ')}</p>
             )}
@@ -149,7 +154,7 @@ export default function CouponPublicPage() {
           {/* QR */}
           {isActive ? (
             <div
-              className="flex flex-col items-center gap-2 pt-1 cursor-pointer"
+              className="flex flex-col items-center gap-2.5 pt-1 cursor-pointer"
               onClick={() => setFullscreen(true)}
             >
               <div className="p-4 rounded-2xl shadow-lg" style={{ background: '#fff' }}>
@@ -161,15 +166,15 @@ export default function CouponPublicPage() {
                   style={{ display: 'block', borderRadius: 8 }}
                 />
               </div>
-              <p className="text-gray-500 text-xs font-mono">{coupon.code}</p>
-              <div className="flex items-center gap-1.5 px-4 py-2 rounded-xl"
+              <p className="text-gray-500 text-sm font-mono">{coupon.code}</p>
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl"
                 style={{ background: 'rgba(248,67,49,0.1)', border: '1px solid rgba(248,67,49,0.2)' }}>
-                <span className="text-sm">⛶</span>
-                <span className="text-red-400 text-xs font-semibold">Toca para agrandar</span>
+                <Maximize2 size={15} className="text-red-400" color="#f87171" />
+                <span className="text-red-400 text-sm font-semibold">Toca para agrandar</span>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 pt-1 opacity-40">
+            <div className="flex flex-col items-center gap-2.5 pt-1 opacity-40">
               <div className="p-4 rounded-2xl" style={{ background: '#fff' }}>
                 <QRCodeCanvas
                   value={couponUrl}
@@ -178,7 +183,7 @@ export default function CouponPublicPage() {
                   style={{ display: 'block', borderRadius: 8, filter: 'grayscale(1)' }}
                 />
               </div>
-              <p className="text-gray-600 text-xs font-mono">{coupon.code}</p>
+              <p className="text-gray-600 text-sm font-mono">{coupon.code}</p>
             </div>
           )}
         </div>
@@ -187,8 +192,8 @@ export default function CouponPublicPage() {
         {isActive && (
           <div className="rounded-2xl px-5 py-4 text-center"
             style={{ background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)' }}>
-            <p className="text-green-400 text-sm font-semibold">Muestra este QR al cajero</p>
-            <p className="text-gray-500 text-xs mt-1">El staff de Pizzazi lo escaneará para aplicar tu descuento</p>
+            <p className="text-green-400 text-base font-semibold">Muestra este QR al cajero</p>
+            <p className="text-gray-500 text-sm mt-1">El staff de Pizzazi lo escaneará para aplicar tu descuento</p>
           </div>
         )}
 
