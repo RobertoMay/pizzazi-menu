@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { X, Download, Printer, XCircle } from 'react-feather';
+import { X, Share2, Printer, XCircle } from 'react-feather';
 import { FaWhatsapp } from 'react-icons/fa';
 import { QRCodeCanvas } from 'qrcode.react';
 import { toast } from 'sonner';
 import { cancelCoupon } from '../../services/api';
 import ConfirmModal from './ConfirmModal';
-import { shareWhatsApp, buildWaMessage } from '../../utils/couponShare';
+import { openWhatsApp, shareImage, buildWaMessage } from '../../utils/couponShare';
 
 const LOGO  = '/images/logo.png';
 const QR_ID = 'detail-qr';
@@ -64,22 +64,17 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
 
   const waMsg = buildWaMessage(coupon.customer?.name, discountText, validUntilStr, couponUrl);
 
-  const handleWhatsApp = async () => {
+  const handleWhatsApp = () => {
+    openWhatsApp(coupon.customer?.phone ?? '', waMsg);
+  };
+
+  const handleShare = async () => {
     setSharing(true);
     try {
-      await shareWhatsApp(QR_ID, coupon.code, coupon.customer?.name, discountText, validUntilStr, couponUrl, coupon.customer?.phone ?? '', waMsg);
+      await shareImage(QR_ID, coupon.code, coupon.customer?.name, discountText, validUntilStr, couponUrl);
     } finally {
       setSharing(false);
     }
-  };
-
-  const handleDownload = () => {
-    const qrEl = document.getElementById('detail-qr') as HTMLCanvasElement;
-    if (!qrEl) return;
-    const link = document.createElement('a');
-    link.download = `cupon-${coupon.code}.png`;
-    link.href = qrEl.toDataURL('image/png');
-    link.click();
   };
 
   const handlePrint = () => {
@@ -217,12 +212,18 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
           <div className="px-5 pb-5 pt-3 space-y-2 flex-shrink-0"
             style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
 
+            <button onClick={handleWhatsApp}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
+              style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)' }}>
+              <FaWhatsapp size={16} /> Enviar por WhatsApp
+            </button>
+
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={handleDownload}
-                className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
+              <button onClick={handleShare} disabled={sharing}
+                className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
                 style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <Download size={15} />
-                Descargar QR
+                <Share2 size={15} />
+                {sharing ? 'Generando...' : 'Compartir imagen'}
               </button>
               <button onClick={handlePrint}
                 className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold"
@@ -231,13 +232,6 @@ export default function CouponDetailModal({ coupon: initial, onClose, onCancelle
                 Imprimir
               </button>
             </div>
-
-            <button onClick={handleWhatsApp} disabled={sharing}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-60"
-              style={{ background: 'rgba(37,211,102,0.15)', border: '1px solid rgba(37,211,102,0.3)' }}>
-              <FaWhatsapp size={16} />
-              {sharing ? 'Generando imagen...' : 'Enviar por WhatsApp'}
-            </button>
 
             {coupon.status === 'active' && (
               <button onClick={() => setShowConfirmCancel(true)}

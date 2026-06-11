@@ -4,6 +4,10 @@ export const buildWaLink = (phone: string, message: string) => {
   return `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
 };
 
+export const openWhatsApp = (phone: string, message: string) => {
+  window.open(buildWaLink(phone, message), '_blank');
+};
+
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
   const a   = document.createElement('a');
@@ -13,21 +17,28 @@ const downloadBlob = (blob: Blob, filename: string) => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
-export const shareWhatsApp = async (
+export const shareImage = async (
   qrCanvasId: string,
   couponCode: string,
   customerName: string,
   discountText: string,
   validUntilStr: string,
   couponUrl: string,
-  phone: string,
-  message: string,
 ): Promise<void> => {
-  const blob = await buildShareImage(qrCanvasId, couponCode, customerName, discountText, validUntilStr, couponUrl);
+  const blob     = await buildShareImage(qrCanvasId, couponCode, customerName, discountText, validUntilStr, couponUrl);
+  const filename = `cupon-${couponCode}.png`;
+  const file     = new File([blob], filename, { type: 'image/png' });
 
-  // Descarga la imagen y abre WhatsApp directo al número del cliente
-  downloadBlob(blob, `cupon-${couponCode}.png`);
-  setTimeout(() => window.open(buildWaLink(phone, message), '_blank'), 400);
+  // Móvil: selector nativo de compartir con la imagen lista
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return;
+    } catch { /* cancelado */ }
+  }
+
+  // Desktop / fallback: descarga directa
+  downloadBlob(blob, filename);
 };
 
 // Emojis definidos por código Unicode para evitar problemas de encoding en el archivo fuente
