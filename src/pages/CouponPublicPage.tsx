@@ -16,7 +16,7 @@ const DISCOUNT_TEXT = (type: string, value?: number, description?: string) => {
     case 'percentage':   return `${value}% de descuento${desc}`;
     case 'fixed_amount': return `$${value}${desc}`;
     case '2x1':          return `2×1${desc}`;
-    case 'free_item':    return description || 'Producto gratis';
+    case 'free_item':    return description ? `${description} gratis` : 'Producto gratis';
     default:             return description || 'Descuento especial';
   }
 };
@@ -104,6 +104,7 @@ export default function CouponPublicPage() {
         <div className="text-center px-6">
           <p className="text-gray-800 font-black text-2xl leading-tight">{discountText}</p>
           <p className="text-gray-500 text-base mt-1">Para: <strong>{coupon.customer?.name}</strong></p>
+          <p className="text-gray-400 text-sm font-mono font-bold tracking-widest mt-2">{coupon.code}</p>
         </div>
         <p className="text-gray-400 text-sm text-center px-8">
           Muestra este código al cajero para canjear tu descuento

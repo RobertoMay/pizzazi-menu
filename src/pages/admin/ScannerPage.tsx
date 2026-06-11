@@ -33,7 +33,7 @@ const discountText = (type: string, value?: number, description?: string) => {
     case 'percentage':   return `${value}% de descuento${d}`;
     case 'fixed_amount': return `$${value}${d}`;
     case '2x1':          return `2×1${d}`;
-    case 'free_item':    return description || 'Producto gratis';
+    case 'free_item':    return description ? `${description} gratis` : 'Producto gratis';
     default:             return description || 'Descuento especial';
   }
 };
