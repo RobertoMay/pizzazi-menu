@@ -213,7 +213,6 @@ export default function ScannerPage() {
                 ¡Hoy {todayPromos.length === 1 ? 'hay una promoción activa' : `hay ${todayPromos.length} promociones activas`}!
               </p>
               <p className="text-yellow-500/80 text-xs mt-0.5">{todayPromos.join(' · ')}</p>
-              <p className="text-yellow-600/70 text-xs mt-1">El cliente puede preferir usar la promoción en lugar del cupón.</p>
             </div>
           </div>
         )}
