@@ -31,7 +31,7 @@ const discountText = (type: string, value?: number, description?: string) => {
   const d = description ? ` — ${description}` : '';
   switch (type) {
     case 'percentage':   return `${value}% de descuento${d}`;
-    case 'fixed_amount': return `$${value} de descuento${d}`;
+    case 'fixed_amount': return `$${value}${d}`;
     case '2x1':          return `2×1${d}`;
     case 'free_item':    return description || 'Producto gratis';
     default:             return description || 'Descuento especial';

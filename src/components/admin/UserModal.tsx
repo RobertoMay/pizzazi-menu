@@ -69,7 +69,6 @@ export default function UserModal({ mode, targetUser, branches, isSuperAdmin, on
   const [newRole,  setNewRole]  = useState<NewRole>('admin');
   const [branch,   setBranch]   = useState(branches?.[0]?._id ?? '');
   const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
 
   // Admin availability check
   const [checking,      setChecking]      = useState(false);
@@ -116,9 +115,9 @@ export default function UserModal({ mode, targetUser, branches, isSuperAdmin, on
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (existingAdmin) return;
-    if (password !== confirm) { setError('Las contraseñas no coinciden'); return; }
-    if (password.length < 6)  { setError('La contraseña debe tener al menos 6 caracteres'); return; }
-    setError(''); setLoading(true);
+    if (password !== confirm) { toast.error('Las contraseñas no coinciden'); return; }
+    if (password.length < 6)  { toast.error('La contraseña debe tener al menos 6 caracteres'); return; }
+    setLoading(true);
     try {
       if (mode === 'create') {
         const payload: Record<string, unknown> = {
@@ -149,7 +148,7 @@ export default function UserModal({ mode, targetUser, branches, isSuperAdmin, on
       onSaved();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al guardar';
-      setError(msg); toast.error(msg);
+      toast.error(msg);
     } finally { setLoading(false); }
   };
 
@@ -359,7 +358,6 @@ export default function UserModal({ mode, targetUser, branches, isSuperAdmin, on
               </div>
             )}
 
-            {error && <p className="text-red-400 text-sm">{error}</p>}
           </div>
 
           {/* Footer */}

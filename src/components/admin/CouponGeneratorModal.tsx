@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Search, User, UserPlus } from 'react-feather';
+import { toast } from 'sonner';
 import { createCoupon, getCustomers, createCustomer, getAllBranches } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -67,8 +68,7 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
   const [inlineCreate,  setInlineCreate]  = useState(false);
   const [newName,       setNewName]       = useState('');
   const [newPhone,      setNewPhone]      = useState('');
-  const [savingCust,    setSavingCust]    = useState(false);
-  const [custCreateErr, setCustCreateErr] = useState('');
+  const [savingCust, setSavingCust] = useState(false);
 
   const looksLikePhone = (s: string) => /^\d[\d\s\-()]*$/.test(s.trim());
 
@@ -77,23 +77,21 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
     setShowDropdown(false);
     setNewPhone(looksLikePhone(custSearch) ? custSearch.trim().replace(/\D/g, '') : '');
     setNewName('');
-    setCustCreateErr('');
   };
 
   const handleCreateCustomer = async () => {
     const digits = newPhone.trim().replace(/\D/g, '');
-    if (!newName.trim())        { setCustCreateErr('El nombre es requerido'); return; }
-    if (digits.length !== 10)   { setCustCreateErr('El teléfono debe tener exactamente 10 dígitos'); return; }
-    if (!branch)                { setCustCreateErr('Selecciona una sucursal primero'); return; }
+    if (!newName.trim())        { toast.error('El nombre es requerido'); return; }
+    if (digits.length !== 10)   { toast.error('El teléfono debe tener exactamente 10 dígitos'); return; }
+    if (!branch)                { toast.error('Selecciona una sucursal primero'); return; }
     setSavingCust(true);
-    setCustCreateErr('');
     try {
       const created = await createCustomer({ name: newName.trim(), phone: digits, branch });
       setCustomer(created);
       setInlineCreate(false);
       setCustSearch('');
     } catch (err: unknown) {
-      setCustCreateErr(err instanceof Error ? err.message : 'Error al crear cliente');
+      toast.error(err instanceof Error ? err.message : 'Error al crear cliente');
     } finally {
       setSavingCust(false);
     }
@@ -138,18 +136,16 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
 
   // ── Submit ──
   const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState('');
 
   const needsValue = discountType === 'percentage' || discountType === 'fixed_amount';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    if (!branch)   return setError('Selecciona una sucursal');
-    if (!customer) return setError('Selecciona un cliente');
-    if (applyTo.length === 0) return setError('Selecciona al menos un lugar de aplicación');
-    if (needsValue && !discountValue) return setError('Ingresa el valor del descuento');
-    if (validUntil <= validFrom) return setError('La fecha final debe ser posterior a la inicial');
+    if (!branch)   { toast.error('Selecciona una sucursal'); return; }
+    if (!customer) { toast.error('Selecciona un cliente'); return; }
+    if (applyTo.length === 0) { toast.error('Selecciona al menos un lugar de aplicación'); return; }
+    if (needsValue && !discountValue) { toast.error('Ingresa el valor del descuento'); return; }
+    if (validUntil <= validFrom) { toast.error('La fecha final debe ser posterior a la inicial'); return; }
 
     setSaving(true);
     try {
@@ -177,7 +173,7 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
       });
       onCreated(result);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al generar el cupón');
+      toast.error(err instanceof Error ? err.message : 'Error al generar el cupón');
     } finally {
       setSaving(false);
     }
@@ -251,7 +247,6 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
                       placeholder="10 dígitos" className={inp} style={inpStyle} />
                   </div>
                 </div>
-                {custCreateErr && <p className="text-red-400 text-xs">{custCreateErr}</p>}
                 <button type="button" onClick={handleCreateCustomer} disabled={savingCust}
                   className="w-full py-2.5 rounded-xl text-white text-sm font-bold disabled:opacity-50"
                   style={{ background: '#16a34a' }}>
@@ -468,7 +463,6 @@ export default function CouponGeneratorModal({ prefillCustomer, onClose, onCreat
             </div>
           </div>
 
-          {error && <p className="text-red-400 text-sm pb-1">{error}</p>}
         </form>
 
         {/* Footer sticky */}

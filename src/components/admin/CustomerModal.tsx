@@ -24,18 +24,15 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
   const [branch,  setBranch]  = useState(customer?.branch  ?? defaultBranch ?? user?.branch?._id ?? '');
   const [branches, setBranches] = useState<Branch[]>([]);
   const [saving, setSaving]   = useState(false);
-  const [error,  setError]    = useState('');
-
   useEffect(() => {
     if (isSuperAdmin) getAllBranches().then(setBranches);
   }, [isSuperAdmin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     const digits = phone.trim().replace(/\D/g, '');
-    if (!name.trim())          { setError('El nombre es requerido'); return; }
-    if (digits.length !== 10)  { setError('El teléfono debe tener exactamente 10 dígitos'); return; }
+    if (!name.trim())          { toast.error('El nombre es requerido'); return; }
+    if (digits.length !== 10)  { toast.error('El teléfono debe tener exactamente 10 dígitos'); return; }
     setSaving(true);
     try {
       const payload = { name: name.trim(), phone: digits, notes: notes.trim(), ...(isSuperAdmin ? { branch } : {}) };
@@ -45,7 +42,6 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
       toast.success(customer ? 'Cliente guardado' : 'Cliente creado');
       onSaved(saved);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al guardar');
       toast.error(err instanceof Error ? err.message : 'Error al guardar');
     } finally {
       setSaving(false);
@@ -126,8 +122,6 @@ export default function CustomerModal({ customer, defaultBranch, onClose, onSave
               style={{ ...inputStyle, resize: 'none' }}
             />
           </div>
-
-          {error && <p className="text-red-400 text-sm">{error}</p>}
 
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose}

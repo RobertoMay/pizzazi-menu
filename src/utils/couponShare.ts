@@ -5,7 +5,13 @@ export const buildWaLink = (phone: string, message: string) => {
 };
 
 export const openWhatsApp = (phone: string, message: string) => {
-  window.open(buildWaLink(phone, message), '_blank');
+  const a = document.createElement('a');
+  a.href = buildWaLink(phone, message);
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };
 
 const downloadBlob = (blob: Blob, filename: string) => {

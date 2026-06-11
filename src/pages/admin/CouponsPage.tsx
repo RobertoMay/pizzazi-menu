@@ -30,7 +30,7 @@ interface Coupon {
 
 const DISCOUNT_LABEL: Record<string, (v?: number) => string> = {
   percentage:   v => `${v}% descuento`,
-  fixed_amount: v => `$${v} descuento`,
+  fixed_amount: v => `$${v}`,
   '2x1':        () => '2×1',
   free_item:    () => 'Producto gratis',
 };
