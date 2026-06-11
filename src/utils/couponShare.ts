@@ -34,17 +34,19 @@ export const shareImage = async (
 ): Promise<void> => {
   const blob     = await buildShareImage(qrCanvasId, couponCode, customerName, discountText, validUntilStr, couponUrl);
   const filename = `cupon-${couponCode}.png`;
-  const file     = new File([blob], filename, { type: 'image/png' });
 
-  // Móvil: selector nativo de compartir con la imagen lista
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file] });
-      return;
-    } catch { /* cancelado */ }
+  // Móvil: selector nativo (abre WhatsApp, Telegram, etc.)
+  // Desktop: siempre descarga — el selector nativo en desktop requiere WhatsApp Desktop instalado
+  if (isMobile()) {
+    const file = new File([blob], filename, { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        return;
+      } catch { /* cancelado */ }
+    }
   }
 
-  // Desktop / fallback: descarga directa
   downloadBlob(blob, filename);
 };
 

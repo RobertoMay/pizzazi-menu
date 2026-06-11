@@ -29,12 +29,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string) => {
     const data = await apiLogin(username, password);
     localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
     setUser(data.user);
   };
 
   const logout = async () => {
     try { await apiLogout(); } catch {}
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     setUser(null);
   };
 

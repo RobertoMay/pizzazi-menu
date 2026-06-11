@@ -6,9 +6,29 @@ const fetchJSON = async (url: string, options?: RequestInit) => {
   return res.json();
 };
 
-const authFetch = async (url: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem('accessToken');
-  const res = await fetch(url, {
+// Intenta renovar el access token con el refresh token guardado.
+// Devuelve el nuevo access token o null si falla (sesión expirada).
+const tryRefresh = async (): Promise<string | null> => {
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken) return null;
+  try {
+    const res = await fetch(`${API}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    return data.accessToken;
+  } catch {
+    return null;
+  }
+};
+
+const doFetch = (url: string, options: RequestInit, token: string | null) =>
+  fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -16,6 +36,24 @@ const authFetch = async (url: string, options: RequestInit = {}) => {
       ...options.headers,
     },
   });
+
+const authFetch = async (url: string, options: RequestInit = {}) => {
+  let token = localStorage.getItem('accessToken');
+  let res   = await doFetch(url, options, token);
+
+  // Token expirado — intenta refrescar y reintentar una vez
+  if (res.status === 401) {
+    token = await tryRefresh();
+    if (token) {
+      res = await doFetch(url, options, token);
+    } else {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/admin';
+      throw new Error('Sesión expirada');
+    }
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.message || `HTTP ${res.status}`);
