@@ -3,6 +3,7 @@ import jsQR from 'jsqr';
 import { RotateCcw, CameraOff, CheckCircle, Search, AlertTriangle } from 'react-feather';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getCouponPublic, redeemCouponPublic, getPromotions } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface CouponData {
   _id: string; code: string;
@@ -44,6 +45,7 @@ const extractCode = (text: string): string | null => {
 };
 
 export default function ScannerPage() {
+  const { user }  = useAuth();
   const videoRef  = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef   = useRef<number>(0);
@@ -127,7 +129,9 @@ export default function ScannerPage() {
   // Detecta promociones activas hoy para mostrar advertencia al cajero
   useEffect(() => {
     const today = new Date().getDay(); // 0=Dom, 1=Lun, ... 6=Sáb
-    getPromotions({ active: 'true' })
+    const params: Record<string, string> = { active: 'true' };
+    if (user?.branch?._id) params.branch = user.branch._id;
+    getPromotions(params)
       .then((promos: any[]) => {
         const now = new Date();
         const active = promos.filter(p =>
