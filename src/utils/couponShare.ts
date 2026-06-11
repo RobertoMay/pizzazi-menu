@@ -1,13 +1,8 @@
 export const buildWaLink = (phone: string, message: string) => {
   const digits  = phone.replace(/\D/g, '');
   const waPhone = digits.length === 10 ? `521${digits}` : digits;
-  const url = new URL('https://api.whatsapp.com/send');
-  url.searchParams.set('phone', waPhone);
-  url.searchParams.set('text', message);
-  return url.toString();
+  return `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
 };
-
-const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
@@ -29,17 +24,8 @@ export const shareWhatsApp = async (
   message: string,
 ): Promise<void> => {
   const blob = await buildShareImage(qrCanvasId, couponCode, customerName, discountText, validUntilStr, couponUrl);
-  const file = new File([blob], `cupon-${couponCode}.png`, { type: 'image/png' });
 
-  // Móvil: Web Share API — abre el selector nativo con imagen + texto
-  if (isMobile() && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], text: message });
-      return;
-    } catch { /* cancelado por el usuario */ }
-  }
-
-  // Desktop: descarga la imagen y abre WhatsApp Web con número y texto listos
+  // Descarga la imagen y abre WhatsApp directo al número del cliente
   downloadBlob(blob, `cupon-${couponCode}.png`);
   setTimeout(() => window.open(buildWaLink(phone, message), '_blank'), 400);
 };
