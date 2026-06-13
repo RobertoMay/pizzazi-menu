@@ -41,6 +41,7 @@ export default function MenuPage() {
         setData(menu);
         setActiveTab(0);
         setLoading(false);
+        document.title = `Pizzazi — ${menu.branch.name}`;
       })
       .catch((err: Error) => {
         if (err.message.includes('404')) setNotFound(true);

@@ -49,6 +49,11 @@ export default function CouponPublicPage() {
   const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
+    document.title = 'Cupón Pizzazi';
+    return () => { document.title = 'Pizzazi'; };
+  }, []);
+
+  useEffect(() => {
     if (!code) return;
     getCouponPublic(code)
       .then(setCoupon)
