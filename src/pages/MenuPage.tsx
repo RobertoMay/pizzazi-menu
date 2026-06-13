@@ -98,7 +98,7 @@ export default function MenuPage() {
           className="overflow-hidden transition-all duration-300"
           style={{ maxHeight: scrolled ? '0px' : '400px', opacity: scrolled ? 0 : 1 }}
         >
-          <Header />
+          <Header branchName={branch.name} />
         </div>
 
         {globalPromotions.length > 0 && (
@@ -133,7 +133,7 @@ export default function MenuPage() {
             />
             <div className="leading-tight">
               <p className="text-white font-black text-base tracking-widest">PIZZAZI</p>
-              <p className="text-gray-400 text-sm">Menú Digital</p>
+              <p className="text-gray-400 text-sm">{branch.name}</p>
             </div>
           </div>
 
